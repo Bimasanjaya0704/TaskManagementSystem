@@ -17,7 +17,7 @@ public class AppDbContext : DbContext
             .HasOne(t => t.AssignedToUser)
             .WithMany(u => u.AssignedTasks)
             .HasForeignKey(t => t.AssignedToUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict); 
 
         modelBuilder.Entity<TaskEntity>()
             .HasOne(t => t.ReviewedByUser)

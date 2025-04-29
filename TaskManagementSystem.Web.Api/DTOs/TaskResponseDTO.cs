@@ -13,5 +13,4 @@ public class TaskResponseDto
     public int AssignedToUserId { get; set; }
     public int? ReviewedByUserId { get; set; }
     public int ProjectId { get; set; }
-    public ProjectDTO Project { get; set; }
 }

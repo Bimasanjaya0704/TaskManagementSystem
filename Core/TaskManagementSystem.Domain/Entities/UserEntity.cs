@@ -16,6 +16,6 @@ public class UserEntity
     public string PasswordHash { get; set; } = string.Empty;
     public Role Role { get; set; } = Role.User;
 
-    public List<TaskEntity> AssignedTasks { get; set; } = new();
-    public List<TaskEntity> ReviewedTasks { get; set; } = new();
+    public virtual List<TaskEntity> AssignedTasks { get; set; } = new();
+    public virtual List<TaskEntity> ReviewedTasks { get; set; } = new();
 }

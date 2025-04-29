@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagementSystem.Application.DTOs;
 using TaskManagementSystem.Application.Interfaces;
@@ -15,12 +16,14 @@ public class TaskController : ControllerBase
     private readonly ITaskService _taskService;
     private readonly ILogger<TaskController> _logger;
     private readonly TokenService _tokenService;
+    private readonly IMapper _mapper;
 
-    public TaskController(ITaskService taskService, ILogger<TaskController> logger, TokenService tokenService)
+    public TaskController(ITaskService taskService, ILogger<TaskController> logger, TokenService tokenService, IMapper mapper)
     {
         _taskService = taskService;
         _logger = logger;
         _tokenService = tokenService;
+        _mapper = mapper;
     }
 
     [Authorize(Roles = "User,Admin")]
@@ -44,17 +47,7 @@ public class TaskController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
-        var taskResponseDto = result.Data.Select(task => new TaskResponseDto
-        {
-            Id = task.Id,
-            Title = task.Title,
-            Description = task.Description,
-            DueDate = task.DueDate,
-            Status = task.Status,
-            AssignedToUserId = task.AssignedToUserId,
-            ReviewedByUserId = task.ReviewedByUserId,
-            ProjectId = task.ProjectId
-        }).ToList();
+        var taskResponseDto = _mapper.Map<List<TaskResponseDto>>(result.Data);
 
         _logger.LogInformation("End, GetAllTasks - Success, Retrieved {Count} tasks", taskResponseDto.Count);
         return Ok(new ApiResponse<List<TaskResponseDto>>(true, "Success", taskResponseDto));
@@ -81,17 +74,7 @@ public class TaskController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
-        var taskResponseDto = new TaskResponseDto
-        {
-            Id = result.Data.Id,
-            Title = result.Data.Title,
-            Description = result.Data.Description,
-            DueDate = result.Data.DueDate,
-            Status = result.Data.Status,
-            AssignedToUserId = result.Data.AssignedToUserId,
-            ReviewedByUserId = result.Data.ReviewedByUserId,
-            ProjectId = result.Data.ProjectId
-        };
+        var taskResponseDto = _mapper.Map<TaskResponseDto>(result.Data);
 
         _logger.LogInformation("End, GetTaskById - Success: Found Task {TaskId}", id);
         return Ok(new ApiResponse<TaskResponseDto>(true, "Success", taskResponseDto));
@@ -110,16 +93,8 @@ public class TaskController : ControllerBase
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
 
-        var result = await _taskService.AddAsync(new TaskDTO()
-        {
-            Title = taskRequestDto.Title,
-            Description = taskRequestDto.Description,
-            DueDate = taskRequestDto.DueDate,
-            Status = taskRequestDto.Status,
-            AssignedToUserId = taskRequestDto.AssignedToUserId,
-            ReviewedByUserId = taskRequestDto.ReviewedByUserId,
-            ProjectId = taskRequestDto.ProjectId
-        });
+        var taskDto = _mapper.Map<TaskDTO>(taskRequestDto);
+        var result = await _taskService.AddAsync(taskDto);
 
         if (!result.IsSuccess)
         {
@@ -127,18 +102,7 @@ public class TaskController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
-        var taskResponseDto = new TaskResponseDto
-        {
-            Id = result.Data.Id,
-            Title = result.Data.Title,
-            Description = result.Data.Description,
-            DueDate = result.Data.DueDate,
-            Status = result.Data.Status,
-            AssignedToUserId = result.Data.AssignedToUserId,
-            ReviewedByUserId = result.Data.ReviewedByUserId,
-            ProjectId = result.Data.ProjectId
-
-        };
+        var taskResponseDto = _mapper.Map<TaskResponseDto>(result.Data);
 
         _logger.LogInformation("End, CreateTask - Success: Created Task {TaskId}", taskResponseDto.Id);
         return Ok(new ApiResponse<TaskResponseDto>(true, "Success", taskResponseDto));
@@ -163,18 +127,7 @@ public class TaskController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, "Invalid request data.", null));
         }
 
-        var taskDto = new TaskDTO()
-        {
-            Id = id,
-            Title = taskRequestDto.Title,
-            Description = taskRequestDto.Description,
-            DueDate = taskRequestDto.DueDate,
-            Status = taskRequestDto.Status,
-            AssignedToUserId = taskRequestDto.AssignedToUserId,
-            ReviewedByUserId = taskRequestDto.ReviewedByUserId,
-            ProjectId = taskRequestDto.ProjectId
-
-        };
+        var taskDto = _mapper.Map<TaskDTO>(taskRequestDto);
 
         var result = await _taskService.UpdateAsync(id, taskDto);
 
@@ -184,18 +137,7 @@ public class TaskController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
-        var taskResponseDto = new TaskResponseDto
-        {
-            Id = result.Data.Id,
-            Title = result.Data.Title,
-            Description = result.Data.Description,
-            DueDate = result.Data.DueDate,
-            Status = result.Data.Status,
-            AssignedToUserId = result.Data.AssignedToUserId,
-            ReviewedByUserId = result.Data.ReviewedByUserId,
-            ProjectId = result.Data.ProjectId
-
-        };
+        var taskResponseDto = _mapper.Map<TaskResponseDto>(result.Data);
 
         _logger.LogInformation("End, UpdateTask - Success: Updated Task {TaskId}", id);
         return Ok(new ApiResponse<TaskResponseDto>(true, "Task updated successfully.", taskResponseDto));
@@ -222,17 +164,7 @@ public class TaskController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
-        var deletedTask = new TaskResponseDto
-        {
-            Id = result.Data.Id,
-            Title = result.Data.Title,
-            Description = result.Data.Description,
-            DueDate = result.Data.DueDate,
-            Status = result.Data.Status,
-            AssignedToUserId = result.Data.AssignedToUserId,
-            ReviewedByUserId = result.Data.ReviewedByUserId,
-            ProjectId = result.Data.ProjectId
-        };
+        var deletedTask = _mapper.Map<TaskResponseDto>(result.Data);
 
         _logger.LogInformation("End, DeleteTask - Success: Deleted Task {TaskId}", id);
         return Ok(new ApiResponse<TaskResponseDto>(true, "Task deleted successfully.", deletedTask));

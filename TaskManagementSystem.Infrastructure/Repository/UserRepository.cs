@@ -21,9 +21,6 @@ public class UserRepository : IUserRepository
     {
         _logger.LogInformation("Start, Fetching all users from the database.");
         var users = await _appDbContext.Users
-            .AsNoTracking()
-            .Include(u => u.AssignedTasks)  
-            .Include(u => u.ReviewedTasks)
             .ToListAsync();
         
         _logger.LogInformation("End, retrieved {Count} users.", users.Count);
@@ -35,9 +32,6 @@ public class UserRepository : IUserRepository
         _logger.LogInformation("Start, Fetching user with ID: {UserId}", id);
 
         var user = await _appDbContext.Users
-            .AsNoTracking()
-            .Include(u => u.AssignedTasks)  
-            .Include(u => u.ReviewedTasks)
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)

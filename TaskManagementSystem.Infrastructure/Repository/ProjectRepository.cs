@@ -22,7 +22,6 @@ public class ProjectRepository : IProjectRepository
         _logger.LogInformation("Start, Fetching all projects from the database.");
 
         var projects = await _appDbContext.Projects
-            .AsNoTracking()
             .ToListAsync();
 
         _logger.LogInformation("End, Successfully retrieved {Count} projects.", projects.Count);
@@ -34,7 +33,6 @@ public class ProjectRepository : IProjectRepository
         _logger.LogInformation("Start, Fetching project with ID: {ProjectId}", id);
 
         var project = await _appDbContext.Projects
-            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (project == null)

@@ -22,10 +22,6 @@ public class TaskRepository : ITaskRepository
         _logger.LogInformation("Start, Fetching all tasks from the database.");
 
         var tasks = await _appDbContext.Tasks
-            .AsNoTracking()
-            .Include(t => t.Project)  
-            .Include(t => t.AssignedToUser)  
-            .Include(t => t.ReviewedByUser)
             .ToListAsync();
 
         _logger.LogInformation("End, Successfully retrieved {Count} tasks.", tasks.Count);
@@ -37,10 +33,6 @@ public class TaskRepository : ITaskRepository
         _logger.LogInformation("Start, Fetching task with ID: {TaskId}", id);
 
         var task = await _appDbContext.Tasks
-            .AsNoTracking()
-            .Include(t => t.Project)  
-            .Include(t => t.AssignedToUser)  
-            .Include(t => t.ReviewedByUser)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (task == null)
@@ -59,7 +51,42 @@ public class TaskRepository : ITaskRepository
     {
         _logger.LogInformation("Start, Adding a new task to the database: {TaskName}", task.Id);
 
+        var project = await _appDbContext.Projects
+            .Include(p => p.Tasks) 
+            .FirstOrDefaultAsync(p => p.Id == task.ProjectId);
+
+        if (project == null)
+        {
+            _logger.LogError("Project with ID {ProjectId} not found.", task.ProjectId);
+            throw new Exception("Project not found");
+        }
+
+        var assignedUser = await _appDbContext.Users.FindAsync(task.AssignedToUserId);
+        if (assignedUser == null)
+        {
+            _logger.LogError("Assigned User with ID {UserId} not found.", task.AssignedToUserId);
+            throw new Exception("Assigned User not found");
+        }
+
+        var reviewedUser = task.ReviewedByUserId.HasValue ? await _appDbContext.Users.FindAsync(task.ReviewedByUserId.Value) : null;
+
+        project.Tasks.Add(task);
+        assignedUser.AssignedTasks.Add(task);
+
+        if (reviewedUser != null)
+        {
+            reviewedUser.ReviewedTasks.Add(task);
+        }
+
         await _appDbContext.Tasks.AddAsync(task);
+
+        _appDbContext.Projects.Update(project);
+        _appDbContext.Users.Update(assignedUser);
+        if (reviewedUser != null)
+        {
+            _appDbContext.Users.Update(reviewedUser);
+        }
+
         await SaveChangesAsync();
 
         _logger.LogInformation("End, Task added successfully with ID {TaskId}.", task.Id);
@@ -95,12 +122,21 @@ public class TaskRepository : ITaskRepository
             return false;
         }
 
-        _appDbContext.Tasks.Remove(task);
-        await SaveChangesAsync();
+        try
+        {
+            _appDbContext.Tasks.Remove(task);
+            await SaveChangesAsync();  
 
-        _logger.LogInformation("End, Delete task with ID: {TaskId}", id);
-        return true;
+            _logger.LogInformation("End, Delete task with ID: {TaskId}", id);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("An error occurred while deleting task with ID {TaskId}: {ErrorMessage}", id, ex.Message);
+            return false;
+        }
     }
+
 
     private async Task SaveChangesAsync()
     {

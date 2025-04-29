@@ -14,9 +14,9 @@ public class ProjectEntity
     public DateTime DueDate { get; set; }
     public ProjectStatus ProjectStatus { get; set; }
     public ProjectPriority ProjectPriority { get; set; }
-    public UserEntity CreatedByUser { get; set; }
+    public virtual UserEntity CreatedByUser { get; set; }
     public int CreatedByUserId { get; set; }
-    public List<TaskEntity> Tasks { get; set; } = new();
+    public virtual List<TaskEntity> Tasks { get; set; } = new();
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

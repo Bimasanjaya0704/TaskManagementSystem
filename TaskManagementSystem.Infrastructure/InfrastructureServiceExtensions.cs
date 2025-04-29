@@ -17,11 +17,13 @@ public static class InfrastructureServiceExtensions
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
-         options.UseNpgsql(
-             configuration.GetConnectionString("DefaultConnection"),
-             b => b.MigrationsAssembly("TaskManagementSystem.Infrastructure")
-         )
-     );
+            options.UseLazyLoadingProxies()
+                .UseNpgsql(
+                    configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly("TaskManagementSystem.Infrastructure")
+                )
+        );
+
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();

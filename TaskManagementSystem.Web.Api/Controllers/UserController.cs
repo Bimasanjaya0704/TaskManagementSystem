@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagementSystem.Application.DTOs;
 using TaskManagementSystem.Application.Interfaces;
@@ -15,12 +16,14 @@ public class UserController : ControllerBase
     private readonly IUserService _userService;
     private readonly ILogger<UserController> _logger;
     private readonly TokenService _tokenService;
+    private readonly IMapper _mapper;
 
-    public UserController(IUserService userService, ILogger<UserController> logger, TokenService tokenService)
+    public UserController(IUserService userService, ILogger<UserController> logger, TokenService tokenService, IMapper mapper)
     {
         _userService = userService;
         _logger = logger;
         _tokenService = tokenService;
+        _mapper = mapper;
     }
 
     [Authorize(Roles = "User,Admin")]
@@ -43,14 +46,7 @@ public class UserController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
-        var userResponseDto = result.Data.Select(user => new UserResponseDto
-        {
-            Id = user.Id,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Email = user.Email,
-            Role = user.Role
-        }).ToList();
+        var userResponseDto = _mapper.Map<List<UserResponseDto>>(result.Data);
 
         _logger.LogInformation("End, GetAllUsers - Success, Retrieved {Count} users", userResponseDto.Count);
         return Ok(new ApiResponse<List<UserResponseDto>>(true, "Success", userResponseDto));
@@ -76,14 +72,7 @@ public class UserController : ControllerBase
             return NotFound(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
-        var userResponseDto = new UserResponseDto
-        {
-            Id = result.Data.Id,
-            FirstName = result.Data.FirstName,
-            LastName = result.Data.LastName,
-            Email = result.Data.Email,
-            Role = result.Data.Role
-        };
+        var userResponseDto = _mapper.Map<UserResponseDto>(result.Data);
 
         _logger.LogInformation("End, GetUserById - Success: Found User {UserId}", id);
         return Ok(new ApiResponse<UserResponseDto>(true, "Success", userResponseDto));
@@ -109,15 +98,11 @@ public class UserController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
+        var updatedUser = result.Data;
+        var userResponseDto = _mapper.Map<UserResponseDto>(updatedUser);
+
         _logger.LogInformation("End, UpdateUser - Success: User Updated {UserId}", id);
-        return Ok(new ApiResponse<UserResponseDto>(true, "User updated successfully", new UserResponseDto
-        {
-            Id = result.Data.Id,
-            FirstName = result.Data.FirstName,
-            LastName = result.Data.LastName,
-            Email = result.Data.Email,
-            Role = result.Data.Role
-        }));
+        return Ok(new ApiResponse<UserResponseDto>(true, "User updated successfully", userResponseDto));
     }
 
     [Authorize(Roles = "User,Admin")]

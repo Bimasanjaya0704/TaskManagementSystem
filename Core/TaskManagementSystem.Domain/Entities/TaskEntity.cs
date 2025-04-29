@@ -15,10 +15,9 @@ public class TaskEntity
     public TaskStatus Status { get; set; }  
     
     public int AssignedToUserId { get; set; }
-    public UserEntity AssignedToUser { get; set; }
-
+    public virtual UserEntity AssignedToUser { get; set; }
     public int? ReviewedByUserId { get; set; }  
-    public UserEntity? ReviewedByUser { get; set; }
+    public virtual UserEntity? ReviewedByUser { get; set; }
     public int ProjectId { get; set; }
-    public ProjectEntity Project { get; set; }
+    public virtual ProjectEntity Project { get; set; }
 }
