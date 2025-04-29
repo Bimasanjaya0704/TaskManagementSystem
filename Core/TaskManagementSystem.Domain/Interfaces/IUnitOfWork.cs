@@ -1,6 +1,13 @@
-﻿namespace TaskManagementSystem.Domain.Interfaces;
+﻿using TaskManagementSystem.Domain.Entities;
+using TaskManagementSystem.Domain.Interfaces.Security;
+
+namespace TaskManagementSystem.Domain.Interfaces;
 
 public interface IUnitOfWork
 {
-    
+    ITaskRepository TaskRepository { get; }
+    IUserRepository UserRepository { get; }
+    IProjectRepository ProjectRepository { get; }
+    IPasswordHasher PasswordHasher { get; }
+    Task<int> CommitAsync();
 }

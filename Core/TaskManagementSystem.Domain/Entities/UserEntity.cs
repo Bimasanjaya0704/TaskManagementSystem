@@ -1,9 +1,21 @@
-﻿namespace TaskManagementSystem.Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using TaskManagementSystem.Domain.Enum;
 
-public class User
+namespace TaskManagementSystem.Domain.Entities;
+
+public class UserEntity
 {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-    public string FullName { get; set; }
-    public string Email { get; set; }
-    public List<Task> Tasks { get; set; } 
+
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
+    public Role Role { get; set; } = Role.User;
+
+    public List<TaskEntity> AssignedTasks { get; set; } = new();
+    public List<TaskEntity> ReviewedTasks { get; set; } = new();
 }

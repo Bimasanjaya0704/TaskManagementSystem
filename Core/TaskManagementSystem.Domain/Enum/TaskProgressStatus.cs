@@ -2,5 +2,10 @@
 
 public enum TaskProgressStatus
 {
-    
+    New,              
+    InProgress,      
+    PendingReview,    
+    Done,            
+    Blocked,        
+    OnHold 
 }

@@ -12,7 +12,7 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services, IConfiguration configuration)
     {
         services.AddApplicationServices();
-        services.AddInfrastructureServices()
+        services.AddInfrastructureServices(configuration);
         return services;
     }
 }

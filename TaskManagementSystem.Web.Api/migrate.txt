@@ -1,0 +1,3 @@
+migrate : dotnet ef migrations add InitialCreate --project ../TaskManagementSystem.Infrastructure/TaskManagementSystem.Infrastructure.csproj --startup-project TaskManagementSystem.Web.Api.csproj
+
+update : dotnet ef database update --project ../TaskManagementSystem.Infrastructure/TaskManagementSystem.Infrastructure.csproj --startup-project TaskManagementSystem.Web.Api.csproj

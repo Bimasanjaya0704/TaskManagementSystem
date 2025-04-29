@@ -1,8 +1,53 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{EDC8826D-BD81-4370-B68B-A977BBE4F738}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{26EB4661-F020-4B9A-B82F-E2E541D25CF6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{061338A1-15B9-4238-8E79-8E206E0FF309}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.Infrastructure", "TaskManagementSystem.Infrastructure\TaskManagementSystem.Infrastructure.csproj", "{8EF1051B-33EC-4D95-A33A-49232EBEBA73}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.Application", "Core\TaskManagementSystem.Application\TaskManagementSystem.Application.csproj", "{84F5705E-6BD2-46C4-89DC-BC27E1380CC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.Domain", "Core\TaskManagementSystem.Domain\TaskManagementSystem.Domain.csproj", "{AC287A07-A660-457E-BAD4-029A9F8E69FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.Web.Api", "TaskManagementSystem.Web.Api\TaskManagementSystem.Web.Api.csproj", "{123591CC-9194-48E8-ABF2-6991481A5E3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.Web", "TaskManagementSystem.Web\TaskManagementSystem.Web.csproj", "{D0C18A43-FBA4-4D2E-B2BC-3BE169A05207}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8EF1051B-33EC-4D95-A33A-49232EBEBA73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EF1051B-33EC-4D95-A33A-49232EBEBA73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EF1051B-33EC-4D95-A33A-49232EBEBA73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EF1051B-33EC-4D95-A33A-49232EBEBA73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84F5705E-6BD2-46C4-89DC-BC27E1380CC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84F5705E-6BD2-46C4-89DC-BC27E1380CC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84F5705E-6BD2-46C4-89DC-BC27E1380CC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84F5705E-6BD2-46C4-89DC-BC27E1380CC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC287A07-A660-457E-BAD4-029A9F8E69FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC287A07-A660-457E-BAD4-029A9F8E69FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC287A07-A660-457E-BAD4-029A9F8E69FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC287A07-A660-457E-BAD4-029A9F8E69FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{123591CC-9194-48E8-ABF2-6991481A5E3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{123591CC-9194-48E8-ABF2-6991481A5E3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{123591CC-9194-48E8-ABF2-6991481A5E3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{123591CC-9194-48E8-ABF2-6991481A5E3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0C18A43-FBA4-4D2E-B2BC-3BE169A05207}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0C18A43-FBA4-4D2E-B2BC-3BE169A05207}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0C18A43-FBA4-4D2E-B2BC-3BE169A05207}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0C18A43-FBA4-4D2E-B2BC-3BE169A05207}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8EF1051B-33EC-4D95-A33A-49232EBEBA73} = {26EB4661-F020-4B9A-B82F-E2E541D25CF6}
+		{84F5705E-6BD2-46C4-89DC-BC27E1380CC7} = {EDC8826D-BD81-4370-B68B-A977BBE4F738}
+		{AC287A07-A660-457E-BAD4-029A9F8E69FC} = {EDC8826D-BD81-4370-B68B-A977BBE4F738}
+		{123591CC-9194-48E8-ABF2-6991481A5E3B} = {061338A1-15B9-4238-8E79-8E206E0FF309}
+		{D0C18A43-FBA4-4D2E-B2BC-3BE169A05207} = {061338A1-15B9-4238-8E79-8E206E0FF309}
 	EndGlobalSection
 EndGlobal

@@ -1,6 +1,17 @@
-﻿namespace Infrastructure.Security;
+﻿using TaskManagementSystem.Domain.Interfaces.Security;
+using static BCrypt.Net.BCrypt;
+namespace Infrastructure.Security;
 
-public class PasswordHasher
+public class PasswordHasher : IPasswordHasher
 {
-    
+    public string HashPassword(string password)
+    {
+        
+        return BCrypt.Net.BCrypt.HashPassword(password);
+    }
+
+    public bool VerifyPassword(string password, string hashedPassword)
+    {
+        return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+    }
 }

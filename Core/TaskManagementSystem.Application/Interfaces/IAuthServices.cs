@@ -1,6 +1,10 @@
-﻿namespace TaskManagementSystem.Application.Interfaces;
+﻿using TaskManagementSystem.Application.DTOs;
+using TaskManagementSystem.Application.Result;
 
-public class IAuthServices
+namespace TaskManagementSystem.Application.Interfaces;
+
+public interface IAuthService
 {
-    
+    Task<TaskErrorResult<UserDTO>> RegisterAsync(RegisterDTO registerDto);
+    Task<TaskErrorResult<AuthResponseDTO>> LoginAsync(LoginDTO loginDto);
 }

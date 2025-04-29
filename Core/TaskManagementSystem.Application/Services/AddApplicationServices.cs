@@ -1,15 +1,22 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AutoMapper;
+using Microsoft.Extensions.DependencyInjection;
 using TaskManagementSystem.Application.Interfaces;
+using TaskManagementSystem.Application.Mappings;
 using TaskManagementSystem.Domain.Interfaces;
 
 namespace TaskManagementSystem.Application.Services;
 
-public static class ServiceCollectionExtensions
+public static class ApplicationServices
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<ITaskService, TaskService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IJwtService, JwtService>();
+        services.AddAutoMapper(typeof(DataMapping));
+
         return services;
     }
 }
