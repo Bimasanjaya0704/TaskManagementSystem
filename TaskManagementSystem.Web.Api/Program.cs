@@ -100,6 +100,10 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
+
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
