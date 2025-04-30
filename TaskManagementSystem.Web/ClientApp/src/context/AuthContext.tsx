@@ -3,8 +3,7 @@ import {
   useState,
   useContext,
   ReactNode,
-  useEffect,
-  use,
+  useEffect
 } from "react";
 import { jwtDecode } from "jwt-decode";
 import { ROLE } from "../types/roles";

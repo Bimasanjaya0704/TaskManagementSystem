@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { updateUser, getUserById } from '../../utils/api';
 import { UserResponseDto } from '../../types/interfaces';
 import { useAuth } from '../../context/AuthContext';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getAllProjects, createProject } from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import { ProjectRequestDto, ProjectResponseDto } from "../../types/interfaces";
@@ -6,7 +6,6 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import ModalCreateProject from "./ModalCreateProject";
 import { FaList, FaPlus } from "react-icons/fa";
-import { get } from "http";
 import { LoadingIcon } from "../../components/LoadingIcon";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import { AlertCircle } from "lucide-react";

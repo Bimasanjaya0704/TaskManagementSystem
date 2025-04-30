@@ -1,6 +1,5 @@
 import axios from "axios";
 import { LoginRequestDto, RegisterDto } from "../types/interfaces";
-import { useAuth } from "../context/AuthContext";
 
 const API_BASE_URL = "http://localhost:5023/api";
 
@@ -22,7 +21,7 @@ export function setAuthToken(token: string | null) {
   console.log("header :", api.defaults.headers.common);
 }
 
-function handleError(error: unknown): never {
+export function handleError(error: unknown): never {
   if (axios.isAxiosError(error)) {
     throw new Error(
       error.response?.data?.message || "An unexpected error occurred"

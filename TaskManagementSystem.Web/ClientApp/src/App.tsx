@@ -12,7 +12,6 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import UserPage from "./pages/Profile/UserPage";
 import ManageProject from "./pages/ManageProject/ManageProject";
-import DetailProject from "./pages/ManageProject/ProjectDetail";
 import ProjectDetail from "./pages/ManageProject/ProjectDetail";
 
 const App: React.FC = () => {
