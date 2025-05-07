@@ -5,7 +5,7 @@ namespace TaskManagementSystem.Web.Api.DTOs;
 
 public class UserResponseDto
 {
-    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string Username { get; set; }
