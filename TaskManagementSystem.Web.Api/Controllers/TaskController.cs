@@ -26,20 +26,30 @@ public class TaskController : ControllerBase
         _mapper = mapper;
     }
 
-    [Authorize(Roles = "User,Admin")]
-    [HttpGet]
-    public async Task<IActionResult> GetAllTask()
+    private string GetTokenFromRequest()
     {
-        _logger.LogInformation("Start, GetAllTasks");
-
         var token = _tokenService.GetTokenFromHeader(Request);
         if (string.IsNullOrEmpty(token))
         {
-            _logger.LogWarning("End, GetAllTasks - Failed: Token is missing");
+            _logger.LogWarning("Token is missing");
+            return null;
+        }
+        return token;
+    }
+
+    [Authorize(Roles = "User,Admin")]
+    [HttpGet]
+    public async Task<IActionResult> GetAllTasks()
+    {
+        _logger.LogInformation("Start, GetAllTasks");
+
+        var token = GetTokenFromRequest();
+        if (string.IsNullOrEmpty(token))
+        {
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
 
-        var result = await _taskService.GetAllAsync();
+        var result = await _taskService.GetAllTasksAsync();
 
         if (!result.IsSuccess)
         {
@@ -55,18 +65,17 @@ public class TaskController : ControllerBase
 
     [Authorize(Roles = "User,Admin")]
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetTaskById(int id)
+    public async Task<IActionResult> GetTaskById(Guid id)
     {
         _logger.LogInformation("Start, GetTaskById: {TaskId}", id);
 
-        var token = _tokenService.GetTokenFromHeader(Request);
+        var token = GetTokenFromRequest();
         if (string.IsNullOrEmpty(token))
         {
-            _logger.LogWarning("End, GetTaskById - Failed: Token is missing");
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
 
-        var result = await _taskService.GetByIdAsync(id);
+        var result = await _taskService.GetTaskByIdAsync(id);
 
         if (!result.IsSuccess)
         {
@@ -86,15 +95,19 @@ public class TaskController : ControllerBase
     {
         _logger.LogInformation("Start, CreateTask");
 
-        var token = _tokenService.GetTokenFromHeader(Request);
+        var token = GetTokenFromRequest();
         if (string.IsNullOrEmpty(token))
         {
-            _logger.LogWarning("End, CreateTask - Failed: Token is missing");
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
 
-        var taskDto = _mapper.Map<TaskDTO>(taskRequestDto);
-        var result = await _taskService.AddAsync(taskDto);
+        if (taskRequestDto == null)
+        {
+            return BadRequest(new ApiResponse<string>(false, "Invalid request data.", null));
+        }
+
+        var taskDto = _mapper.Map<CreateTaskDto>(taskRequestDto);
+        var result = await _taskService.CreateTaskAsync(taskDto);
 
         if (!result.IsSuccess)
         {
@@ -105,31 +118,28 @@ public class TaskController : ControllerBase
         var taskResponseDto = _mapper.Map<TaskResponseDto>(result.Data);
 
         _logger.LogInformation("End, CreateTask - Success: Created Task {TaskId}", taskResponseDto.Id);
-        return Ok(new ApiResponse<TaskResponseDto>(true, "Success", taskResponseDto));
+        return Ok(new ApiResponse<TaskResponseDto>(true, "Task created successfully.", taskResponseDto));
     }
 
     [Authorize(Roles = "User,Admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskRequestDto taskRequestDto)
+    public async Task<IActionResult> UpdateTask(Guid id, [FromBody] TaskRequestDto taskRequestDto)
     {
         _logger.LogInformation("Start, UpdateTask: {TaskId}", id);
 
-        var token = _tokenService.GetTokenFromHeader(Request);
+        var token = GetTokenFromRequest();
         if (string.IsNullOrEmpty(token))
         {
-            _logger.LogWarning("End, UpdateTask - Failed: Token is missing.");
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
 
         if (taskRequestDto == null)
         {
-            _logger.LogWarning("End, UpdateTask - Failed: Invalid request data.");
             return BadRequest(new ApiResponse<string>(false, "Invalid request data.", null));
         }
 
         var taskDto = _mapper.Map<TaskDTO>(taskRequestDto);
-
-        var result = await _taskService.UpdateAsync(id, taskDto);
+        var result = await _taskService.UpdateTaskAsync(id, taskDto);
 
         if (!result.IsSuccess)
         {
@@ -145,18 +155,17 @@ public class TaskController : ControllerBase
 
     [Authorize(Roles = "User,Admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTask(int id)
+    public async Task<IActionResult> DeleteTask(Guid id)
     {
         _logger.LogInformation("Start, DeleteTask: {TaskId}", id);
 
-        var token = _tokenService.GetTokenFromHeader(Request);
+        var token = GetTokenFromRequest();
         if (string.IsNullOrEmpty(token))
         {
-            _logger.LogWarning("End, DeleteTask - Failed: Token is missing.");
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
 
-        var result = await _taskService.DeleteAsync(id);
+        var result = await _taskService.DeleteTaskAsync(id);
 
         if (!result.IsSuccess)
         {
@@ -164,9 +173,7 @@ public class TaskController : ControllerBase
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
-        var deletedTask = _mapper.Map<TaskResponseDto>(result.Data);
-
         _logger.LogInformation("End, DeleteTask - Success: Deleted Task {TaskId}", id);
-        return Ok(new ApiResponse<TaskResponseDto>(true, "Task deleted successfully.", deletedTask));
+        return Ok(new ApiResponse<string>(true, "Task deleted successfully.", null));
     }
 }

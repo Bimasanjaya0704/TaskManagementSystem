@@ -28,7 +28,7 @@ public class ProjectRepository : IProjectRepository
         return projects;
     }
     
-    public async Task<ProjectEntity?> GetProjectByIdAsync(int id)
+    public async Task<ProjectEntity?> GetProjectByIdAsync(Guid id)
     {
         _logger.LogInformation("Start, Fetching project with ID: {ProjectId}", id);
 
@@ -46,7 +46,7 @@ public class ProjectRepository : IProjectRepository
 
         return project;
     }
-    
+
     public async Task<ProjectEntity> AddProjectAsync(ProjectEntity project)
     {
         _logger.LogInformation("Start, Adding a new project to the database: {ProjectName}", project.Id);
@@ -58,7 +58,7 @@ public class ProjectRepository : IProjectRepository
         return project;
     }
     
-    public async Task<ProjectEntity?> UpdateProjectAsync(int id, ProjectEntity project)
+    public async Task<ProjectEntity?> UpdateProjectAsync(Guid id, ProjectEntity project)
     {
         _logger.LogInformation("Start, Updating project with ID: {ProjectId}", id);
 
@@ -77,7 +77,7 @@ public class ProjectRepository : IProjectRepository
         return existingProject;
     }
     
-    public async Task<bool> DeleteProjectAsync(int id)
+    public async Task<bool> DeleteProjectAsync(Guid id)
     {
         _logger.LogInformation("Start, Deleting project with ID: {ProjectId}", id);
 
@@ -93,6 +93,59 @@ public class ProjectRepository : IProjectRepository
 
         _logger.LogInformation("End, Project with ID {ProjectId} deleted successfully.", id);
         return true;
+    }
+
+    public async Task<IEnumerable<ProjectEntity>> GetByUserIdAsync(Guid userId)
+    {
+        _logger.LogInformation("Start, Fetching projects for user with ID: {UserId}", userId);
+        
+        var projects = await _appDbContext.ProjectMembers
+            .Where(pm => pm.UserId == userId)
+            .Include(pm => pm.Project)
+            .ThenInclude(p => p.Creator)
+            .Select(pm => pm.Project)
+            .ToListAsync();
+
+        _logger.LogInformation("End, Successfully retrieved {Count} projects for user with ID: {UserId}.", projects.Count, userId);
+        return projects;
+    }
+
+    public async Task<bool> ExistsAsync(Guid projectId)
+    {
+        _logger.LogInformation("Start, Checking existence of project with ID: {ProjectId}", projectId);
+        
+        var exists = await _appDbContext.Projects.AnyAsync(p => p.Id == projectId);
+
+        if (exists)
+        {
+            _logger.LogInformation("End, Project with ID {ProjectId} exists.", projectId);
+        }
+        else
+        {
+            _logger.LogWarning("End, Project with ID {ProjectId} does not exist.", projectId);
+        }
+
+        return exists;
+    }
+
+    public async Task<bool> IsUserMemberAsync(Guid projectId, Guid userId)
+    {
+        _logger.LogInformation("Start, Checking if user with ID: {UserId} is a member of project with ID: {ProjectId}", userId, projectId);
+
+       
+        var isMember = await _appDbContext.ProjectMembers
+            .AnyAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
+
+        if (isMember)
+        {
+            _logger.LogInformation("End, User with ID {UserId} is a member of project with ID: {ProjectId}.", userId, projectId);
+        }
+        else
+        {
+            _logger.LogWarning("End, User with ID {UserId} is not a member of project with ID: {ProjectId}.", userId, projectId);
+        }
+
+        return isMember;
     }
     
     private async Task SaveChangesAsync()

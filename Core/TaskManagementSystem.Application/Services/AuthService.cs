@@ -6,6 +6,7 @@ using TaskManagementSystem.Application.Enum;
 using TaskManagementSystem.Application.Interfaces;
 using TaskManagementSystem.Application.Result;
 using TaskManagementSystem.Domain.Entities;
+using TaskManagementSystem.Domain.Enum;
 using TaskManagementSystem.Domain.Interfaces;
 
 namespace TaskManagementSystem.Application.Services;
@@ -25,45 +26,53 @@ public class AuthService : IAuthService
         _jwtService = jwtService;
     }
 
-    public async Task<TaskErrorResult<UserDTO>> RegisterAsync(RegisterDTO registerDto)
+    public async Task<TaskErrorResult<UserDTO>> RegisterAsync(CreateUserDto createUserDto)
     {
-        _logger.LogInformation("Start, Registering user with email: {Email}", registerDto.Email);
+        _logger.LogInformation("Start, Registering user with email: {Email}", createUserDto.Email);
 
-        if (string.IsNullOrWhiteSpace(registerDto.Email) || !IsValidEmail(registerDto.Email))
+        if (string.IsNullOrWhiteSpace(createUserDto.Email) || !IsValidEmail(createUserDto.Email))
         {
-            _logger.LogWarning("Invalid email: {Email}", registerDto.Email);
+            _logger.LogWarning("Invalid email: {Email}", createUserDto.Email);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidEmail, "Invalid email.");
         }
 
-        var existingUser = await _unitOfWork.UserRepository.GetUserByEmailAsync(registerDto.Email);
+        var existingUser = await _unitOfWork.UserRepository.GetUserByEmailAsync(createUserDto.Email);
         if (existingUser != null)
         {
-            _logger.LogWarning("Email already in use: {Email}", registerDto.Email);
+            _logger.LogWarning("Email already in use: {Email}", createUserDto.Email);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorEmailAlreadyExists, "Email already in use.");
         }
 
-        if (string.IsNullOrWhiteSpace(registerDto.FirstName) || string.IsNullOrWhiteSpace(registerDto.LastName))
+        if (string.IsNullOrWhiteSpace(createUserDto.FirstName) || string.IsNullOrWhiteSpace(createUserDto.LastName))
         {
-            _logger.LogWarning("First name or last name is missing: {FirstName} {LastName}", registerDto.FirstName, registerDto.LastName);
+            _logger.LogWarning("First name or last name is missing: {FirstName} {LastName}", createUserDto.FirstName, createUserDto.LastName);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidName, "First name or last name cannot be empty.");
         }
 
-        if (string.IsNullOrWhiteSpace(registerDto.Password) || !IsValidPassword(registerDto.Password))
+        if (string.IsNullOrWhiteSpace(createUserDto.Password) || !IsValidPassword(createUserDto.Password))
         {
-            _logger.LogWarning("Weak password provided for email: {Email} with password {Password}", registerDto.Email, registerDto.Password);
+            _logger.LogWarning("Weak password provided for email: {Email} with password {Password}", createUserDto.Email, createUserDto.Password);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorWeakPassword, "Password is too weak. It must have at least 8 characters, including a number, an uppercase letter, and a special character.");
         }
 
-        var hashedPassword = _unitOfWork.PasswordHasher.HashPassword(registerDto.Password);
+        var hashedPassword = _unitOfWork.PasswordHasher.HashPassword(createUserDto.Password);
 
-        var userEntity = _mapper.Map<UserEntity>(registerDto);
-        userEntity.PasswordHash = hashedPassword;
+        var userEntity = new UserEntity
+        {
+            UserId = Guid.NewGuid(),
+            Username = createUserDto.Username,
+            Email = createUserDto.Email,
+            PasswordHash = hashedPassword,
+            FirstName = createUserDto.FirstName,
+            LastName = createUserDto.LastName,
+            Role = Role.User
+        };
 
         await _unitOfWork.UserRepository.AddUserAsync(userEntity);
         await _unitOfWork.CommitAsync();
 
         var userDto = _mapper.Map<UserDTO>(userEntity);
-        _logger.LogInformation("End, Registering user with email: {Email}", registerDto.Email);
+        _logger.LogInformation("End, Registering user with email: {Email}", createUserDto.Email);
         return TaskErrorResult<UserDTO>.Success(userDto);
     }
 

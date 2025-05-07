@@ -15,6 +15,7 @@ public static class ApplicationServices
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IJwtService, JwtService>();
+        services.AddScoped<IFriendshipService, FriendshipService>();
         services.AddAutoMapper(typeof(DataMapping));
 
         return services;

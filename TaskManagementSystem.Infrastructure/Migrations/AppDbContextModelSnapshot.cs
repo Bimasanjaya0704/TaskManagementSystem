@@ -18,25 +18,60 @@ namespace Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.14")
+                .HasAnnotation("Proxies:ChangeTracking", false)
+                .HasAnnotation("Proxies:CheckEquality", false)
+                .HasAnnotation("Proxies:LazyLoading", true)
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.ProjectEntity", b =>
+            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.FriendRequestEntity", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsAccepted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ReceiverId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("FriendRequest");
+                });
+
+            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.ProjectEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("CreatorUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DueDate")
@@ -52,68 +87,91 @@ namespace Infrastructure.Migrations
                     b.Property<int>("ProjectStatus")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatorUserId");
 
                     b.ToTable("Projects");
                 });
 
+            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.ProjectMemberEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProjectMembers");
+                });
+
             modelBuilder.Entity("TaskManagementSystem.Domain.Entities.TaskEntity", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("TaskId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("uuid");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uuid");
 
-                    b.Property<int>("AssignedToUserId")
-                        .HasColumnType("integer");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("ProjectEntityId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
 
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ReviewedByUserId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("ReviewedToUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<string>("Title")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
+                    b.HasKey("TaskId");
 
                     b.HasIndex("AssignedToUserId");
 
-                    b.HasIndex("ProjectEntityId");
-
                     b.HasIndex("ProjectId");
 
-                    b.HasIndex("ReviewedByUserId");
+                    b.HasIndex("ReviewedToUserId");
 
                     b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("TaskManagementSystem.Domain.Entities.UserEntity", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("uuid");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -134,60 +192,108 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.ProjectEntity", b =>
+            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.FriendRequestEntity", b =>
                 {
-                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-                });
-
-            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.TaskEntity", b =>
-                {
-                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "AssignedToUser")
-                        .WithMany("AssignedTasks")
-                        .HasForeignKey("AssignedToUserId")
+                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "Receiver")
+                        .WithMany("FriendshipsReceived")
+                        .HasForeignKey("ReceiverId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TaskManagementSystem.Domain.Entities.ProjectEntity", null)
-                        .WithMany("Tasks")
-                        .HasForeignKey("ProjectEntityId");
+                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "Sender")
+                        .WithMany("FriendshipsRequested")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.HasOne("TaskManagementSystem.Domain.Entities.ProjectEntity", "Project")
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.ProjectEntity", b =>
+                {
+                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "Creator")
                         .WithMany()
+                        .HasForeignKey("CreatorUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.ProjectMemberEntity", b =>
+                {
+                    b.HasOne("TaskManagementSystem.Domain.Entities.ProjectEntity", "Project")
+                        .WithMany("Members")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "ReviewedByUser")
-                        .WithMany("ReviewedTasks")
-                        .HasForeignKey("ReviewedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("AssignedToUser");
+                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "User")
+                        .WithMany("ProjectMemberships")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Project");
 
-                    b.Navigation("ReviewedByUser");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TaskManagementSystem.Domain.Entities.TaskEntity", b =>
+                {
+                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "AssignedTo")
+                        .WithMany("AssignedTasks")
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TaskManagementSystem.Domain.Entities.ProjectEntity", "Project")
+                        .WithMany("Tasks")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TaskManagementSystem.Domain.Entities.UserEntity", "ReviewedTo")
+                        .WithMany("ReviewedTasks")
+                        .HasForeignKey("ReviewedToUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AssignedTo");
+
+                    b.Navigation("Project");
+
+                    b.Navigation("ReviewedTo");
                 });
 
             modelBuilder.Entity("TaskManagementSystem.Domain.Entities.ProjectEntity", b =>
                 {
+                    b.Navigation("Members");
+
                     b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("TaskManagementSystem.Domain.Entities.UserEntity", b =>
                 {
                     b.Navigation("AssignedTasks");
+
+                    b.Navigation("FriendshipsReceived");
+
+                    b.Navigation("FriendshipsRequested");
+
+                    b.Navigation("ProjectMemberships");
 
                     b.Navigation("ReviewedTasks");
                 });

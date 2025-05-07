@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+
 namespace TaskManagementSystem.Web.Api.Services;
 
 public class TokenService
@@ -19,6 +22,31 @@ public class TokenService
         }
         _logger.LogInformation("Authorization header received: {Header}", authorizationHeader);
         return authorizationHeader.Split(" ").Last();
+    }
+    
+    public Guid GetUserIdFromToken(string token)
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.NameIdentifier || c.Type == "userId" || c.Type == "sub");
+
+            if (userIdClaim == null || string.IsNullOrWhiteSpace(userIdClaim.Value))
+            {
+                _logger.LogWarning("User ID claim not found in token.");
+                return Guid.Empty;
+            }
+
+            return Guid.TryParse(userIdClaim.Value, out var userId) ? userId : Guid.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to parse JWT token.");
+            return Guid.Empty;
+        }
     }
 }
 

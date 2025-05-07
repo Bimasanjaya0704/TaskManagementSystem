@@ -34,4 +34,13 @@ public enum TaskErrorType
     ErrorUpdateProject = 29,       
     ErrorDeleteProject = 30,
     ErrorProjectNotFound = 31,
+    ErrorNoMembersFound = 32,
+    ErrorUnauthorizedMember = 33,
+    ErrorAlreadyMember = 34,
+    ErrorInvalidUsername = 35,
+    ErrorUsernameIsAlreadyExist= 36,
+    ErrorFriendshipNotFound = 37,
+    ErrorFriendshipAlreadyExist = 38,
+    ErrorInvalidOperation = 39,
+    ErrorNoPendingRequests = 40
 }

@@ -28,7 +28,7 @@ public class JwtService : IJwtService
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -43,15 +43,15 @@ public class JwtService : IJwtService
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-        _logger.LogInformation("Generated JWT token for user with ID: {UserId} at {Time}", user.Id, DateTime.UtcNow);
+        _logger.LogInformation("Generated JWT token for user with ID: {UserId} at {Time}", user.UserId, DateTime.UtcNow);
 
         return tokenString;
     }
 
-    public bool ValidateToken(string token, out int userId)
+   public bool ValidateToken(string token, out Guid userId)
     {
         _logger.LogInformation("Start, Validating token...");
-        userId = 0; // Default value jika validasi gagal
+        userId = Guid.Empty; 
 
         if (string.IsNullOrEmpty(token))
         {
@@ -87,7 +87,7 @@ public class JwtService : IJwtService
             var jwtToken = (JwtSecurityToken)validatedToken;
             var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Sub)?.Value;
 
-            if (int.TryParse(userIdClaim, out int parsedUserId))
+            if (Guid.TryParse(userIdClaim, out Guid parsedUserId))
             {
                 userId = parsedUserId;
                 _logger.LogInformation("End, Token validated successfully for user with ID: {UserId}", userId);
@@ -95,7 +95,7 @@ public class JwtService : IJwtService
             }
             else
             {
-                _logger.LogWarning("UserId in token is not a valid integer.");
+                _logger.LogWarning("UserId in token is not a valid GUID.");
                 return false;
             }
         }
@@ -105,6 +105,4 @@ public class JwtService : IJwtService
             return false;
         }
     }
-
-
 }
