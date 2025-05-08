@@ -33,7 +33,7 @@ public class ProjectRepository : IProjectRepository
         _logger.LogInformation("Start, Fetching project with ID: {ProjectId}", id);
 
         var project = await _appDbContext.Projects
-            .FirstOrDefaultAsync(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.ProjectId == id);
 
         if (project == null)
         {
@@ -49,12 +49,12 @@ public class ProjectRepository : IProjectRepository
 
     public async Task<ProjectEntity> AddProjectAsync(ProjectEntity project)
     {
-        _logger.LogInformation("Start, Adding a new project to the database: {ProjectName}", project.Id);
+        _logger.LogInformation("Start, Adding a new project to the database: {ProjectName}", project.ProjectId);
 
         await _appDbContext.Projects.AddAsync(project);
         await SaveChangesAsync();
 
-        _logger.LogInformation("End, Project added successfully with ID {ProjectId}.", project.Id);
+        _logger.LogInformation("End, Project added successfully with ID {ProjectId}.", project.ProjectId);
         return project;
     }
     
@@ -114,7 +114,7 @@ public class ProjectRepository : IProjectRepository
     {
         _logger.LogInformation("Start, Checking existence of project with ID: {ProjectId}", projectId);
         
-        var exists = await _appDbContext.Projects.AnyAsync(p => p.Id == projectId);
+        var exists = await _appDbContext.Projects.AnyAsync(p => p.ProjectId == projectId);
 
         if (exists)
         {

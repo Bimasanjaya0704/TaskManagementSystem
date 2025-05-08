@@ -8,7 +8,7 @@ namespace TaskManagementSystem.Domain.Entities;
 public class ProjectEntity
 {
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid ProjectId { get; set; } = Guid.NewGuid();
     public string Name { get; set; }
     public string Description { get; set; }
     public DateTime CreatedAt { get; set; }

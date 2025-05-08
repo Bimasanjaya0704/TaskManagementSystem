@@ -72,19 +72,27 @@ public class ProjectService : IProjectService
         return TaskErrorResult<IEnumerable<ProjectDTO>>.Success(projectDtos);
     }
 
-    public async Task<TaskErrorResult<ProjectDTO>> CreateProjectAsync(CreateProjectDto createProjectDto)
+    public async Task<TaskErrorResult<ProjectDTO>> CreateProjectAsync(ProjectDTO createProjectDto)
     {
         _logger.LogInformation("Start, Adding a new project to the database: {ProjectName}", createProjectDto.Name);
 
         var user = await _unitOfWork.UserRepository.GetUserByIdAsync(createProjectDto.CreatorUserId);
         if (user == null)
-            throw new KeyNotFoundException($"User with ID {createProjectDto.CreatorUserId} not found");
-
+        {
+            _logger.LogError($"User with ID {createProjectDto.CreatorUserId} not found");
+            return TaskErrorResult<ProjectDTO>.Failure(TaskErrorType.ErrorInvalidId, "Invalid user Id.");
+        }
+        
         var project = new ProjectEntity()
         {
+            ProjectId = createProjectDto.ProjectId,
             Name = createProjectDto.Name,
             Description = createProjectDto.Description,
-            CreatorUserId = createProjectDto.CreatorUserId
+            DueDate = createProjectDto.DueDate,
+            ProjectStatus = createProjectDto.ProjectStatus,
+            CreatorUserId = createProjectDto.CreatorUserId,
+            ProjectPriority = createProjectDto.ProjectPriority,
+            CreatedAt = createProjectDto.CreatedAt
         };
 
         var addedProject = await _unitOfWork.ProjectRepository.AddProjectAsync(project);
@@ -92,7 +100,7 @@ public class ProjectService : IProjectService
         // Add creator as an owner member
         var projectMember = new ProjectMemberEntity()
         {
-            ProjectId = addedProject.Id,
+            ProjectId = addedProject.ProjectId,
             UserId = createProjectDto.CreatorUserId,
             Role = ProjectRole.Owner
         };
@@ -278,9 +286,13 @@ public class ProjectService : IProjectService
         
         return new ProjectDTO()
         {
-            ProjectId = project.Id,
+            ProjectId = project.ProjectId,
             Name = project.Name,
             Description = project.Description,
+            DueDate = project.DueDate,
+            ProjectStatus = project.ProjectStatus,
+            ProjectPriority = project.ProjectPriority,
+            CreatorUserId = project.CreatorUserId,
             CreatedAt = project.CreatedAt,
             Creator = new UserDTO()
             {

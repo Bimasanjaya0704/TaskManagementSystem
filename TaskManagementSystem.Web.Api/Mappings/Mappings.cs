@@ -8,7 +8,7 @@ namespace TaskManagementSystem.Web.Api.Mappings
     {
         public MappingsPresentation()
         {
-            CreateMap<ProjectRequestDto, CreateProjectDto>();
+            CreateMap<ProjectRequestDto, ProjectDTO>();
             CreateMap<ProjectDTO, ProjectResponseDto>();
             
             CreateMap<TaskRequestDto, CreateTaskDto>();

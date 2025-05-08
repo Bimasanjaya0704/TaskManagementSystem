@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Security.Claims;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -80,7 +81,7 @@ public class ProjectController : ControllerBase
     }
 
     [Authorize(Roles = "User,Admin,SuperAdmin")]
-    [HttpPost]
+    [HttpPost("create")]
     public async Task<IActionResult> CreateProject([FromBody] ProjectRequestDto projectRequestDto)
     {
         _logger.LogInformation("Start, CreateProject");
@@ -92,7 +93,16 @@ public class ProjectController : ControllerBase
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
 
-        var projectDto = _mapper.Map<CreateProjectDto>(projectRequestDto);
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            _logger.LogWarning("End, CreateProject - Failed: Invalid or missing User ID in token");
+            return Unauthorized(new ApiResponse<string>(false, "Invalid or missing User ID", null));
+        }
+
+        var projectDto = _mapper.Map<ProjectDTO>(projectRequestDto);
+        projectDto.CreatorUserId = userId;
         var result = await _projectService.CreateProjectAsync(projectDto);
 
         if (!result.IsSuccess)
@@ -103,7 +113,7 @@ public class ProjectController : ControllerBase
 
         var projectResponseDto = _mapper.Map<ProjectResponseDto>(result.Data);
 
-        _logger.LogInformation("End, CreateProject - Success: Created Project {ProjectId}", projectResponseDto.Id);
+        _logger.LogInformation("End, CreateProject - Success: Created Project {ProjectId}", projectResponseDto.ProjectId);
         return Ok(new ApiResponse<ProjectResponseDto>(true, "Success", projectResponseDto));
     }
 
@@ -138,7 +148,7 @@ public class ProjectController : ControllerBase
 
         var projectResponseDto = _mapper.Map<ProjectResponseDto>(result.Data);
 
-        _logger.LogInformation("End, UpdateProject - Success: Project updated {ProjectId}", projectResponseDto.Id);
+        _logger.LogInformation("End, UpdateProject - Success: Project updated {ProjectId}", projectResponseDto.ProjectId);
         return Ok(new ApiResponse<ProjectResponseDto>(true, "Project updated successfully.", projectResponseDto));
     }
 
@@ -165,7 +175,7 @@ public class ProjectController : ControllerBase
 
         var deletedTask = _mapper.Map<ProjectResponseDto>(result.Data);
 
-        _logger.LogInformation("End, DeleteProject - Success: Project deleted {ProjectId}", deletedTask.Id);
+        _logger.LogInformation("End, DeleteProject - Success: Project deleted {ProjectId}", deletedTask.ProjectId);
         return Ok(new ApiResponse<ProjectResponseDto>(true, "Project deleted successfully.", deletedTask));
     }
     

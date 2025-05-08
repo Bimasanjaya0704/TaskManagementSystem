@@ -53,7 +53,7 @@ public class TaskRepository : ITaskRepository
 
         var project = await _appDbContext.Projects
             .Include(p => p.Tasks) 
-            .FirstOrDefaultAsync(p => p.Id == task.ProjectId);
+            .FirstOrDefaultAsync(p => p.ProjectId == task.ProjectId);
 
         if (project == null)
         {

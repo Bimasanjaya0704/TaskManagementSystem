@@ -16,11 +16,8 @@ public class DataMapping : Profile
         CreateMap<UserDTO, UserEntity>()
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
 
-        CreateMap<ProjectDTO, ProjectEntity>()
-            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
-
-        CreateMap<ProjectEntity, ProjectDTO>()
-            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
+        CreateMap<ProjectDTO, ProjectEntity>();
+        CreateMap<ProjectEntity, ProjectDTO>();
         CreateMap<RegisterDTO, UserEntity>();
     }
 }

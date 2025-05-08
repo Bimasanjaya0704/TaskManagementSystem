@@ -8,7 +8,7 @@ public interface IProjectService
     Task<TaskErrorResult<ProjectDTO>> GetProjectByIdAsync(Guid id);
     Task<TaskErrorResult<IEnumerable<ProjectDTO>>> GetAllProjectAsync();
     Task<TaskErrorResult<IEnumerable<ProjectDTO>>> GetUserProjectsAsync(Guid userId);
-    Task<TaskErrorResult<ProjectDTO>> CreateProjectAsync(CreateProjectDto createProjectDto);
+    Task<TaskErrorResult<ProjectDTO>> CreateProjectAsync(ProjectDTO createProjectDto);
     Task<TaskErrorResult<ProjectDTO>> UpdateProjectAsync(Guid id, ProjectDTO projectDto);
     Task<TaskErrorResult<ProjectDTO>> DeleteProjectAsync(Guid id);
     Task<bool> ProjectExistsAsync(Guid projectId);
