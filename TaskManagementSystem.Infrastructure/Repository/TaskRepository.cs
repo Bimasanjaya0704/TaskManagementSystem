@@ -68,15 +68,16 @@ public class TaskRepository : ITaskRepository
             throw new Exception("Assigned User not found");
         }
 
-        var reviewedUser = task.ReviewedToUserId.HasValue ? await _appDbContext.Users.FindAsync(task.ReviewedToUserId.Value) : null;
+        var reviewedUser = await _appDbContext.Users.FindAsync(task.ReviewedToUserId);
+        if (assignedUser == null)
+        {
+            _logger.LogError("Reviewed User with ID {UserId} not found.", task.AssignedToUserId);
+            throw new Exception("Reviewed User not found");
+        }
 
         project.Tasks.Add(task);
         assignedUser.AssignedTasks.Add(task);
-
-        if (reviewedUser != null)
-        {
-            reviewedUser.ReviewedTasks.Add(task);
-        }
+        reviewedUser?.ReviewedTasks.Add(task);
 
         await _appDbContext.Tasks.AddAsync(task);
 

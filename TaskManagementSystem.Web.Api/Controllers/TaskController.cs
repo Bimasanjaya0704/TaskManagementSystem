@@ -117,7 +117,7 @@ public class TaskController : ControllerBase
 
         var taskResponseDto = _mapper.Map<TaskResponseDto>(result.Data);
 
-        _logger.LogInformation("End, CreateTask - Success: Created Task {TaskId}", taskResponseDto.Id);
+        _logger.LogInformation("End, CreateTask - Success: Created Task {TaskId}", taskResponseDto.TaskId);
         return Ok(new ApiResponse<TaskResponseDto>(true, "Task created successfully.", taskResponseDto));
     }
 
@@ -175,5 +175,41 @@ public class TaskController : ControllerBase
 
         _logger.LogInformation("End, DeleteTask - Success: Deleted Task {TaskId}", id);
         return Ok(new ApiResponse<string>(true, "Task deleted successfully.", null));
+    }
+
+    [Authorize(Roles = "User,Admin")]
+    [HttpGet("project/{projectId}")]
+    public async Task<IActionResult> GetTasksByProjectId(Guid projectId)
+    {
+        _logger.LogInformation("Start, GetTasksByProjectId : {ProjectId}", projectId);
+
+        var token = GetTokenFromRequest();
+        if (string.IsNullOrEmpty(token))
+        {
+            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
+        }
+
+        var result = await _taskService.GetTasksByProjectIdAsync(projectId);
+        if (!result.IsSuccess)
+        {
+            _logger.LogWarning("End, GetTaskById - Failed: {ErrorMessage}", result.ErrorMessage);
+            return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
+        }
+
+        var taskResponseDto = result.Data.Select(task => new TaskResponseDto()
+        {
+            TaskId = task.TaskId,
+            Title = task.Title,
+            Description = task.Description,
+            DueDate = task.DueDate,
+            CreatedAt = task.CreatedAt,
+            Status = task.Status,
+            AssignedToUserId = task.AssignedToUserId,
+            ReviewedToUserId = task.ReviewedToUserId,
+            ProjectId = task.ProjectId
+        }).ToList();
+            
+        _logger.LogInformation("End, GetTasksByProjectId : {ProjectId}", projectId);
+        return Ok(new ApiResponse<IEnumerable<TaskResponseDto>>(true, "Success", taskResponseDto));
     }
 }

@@ -140,26 +140,38 @@ public class TaskService : ITaskService
         return TaskErrorResult<TaskDTO>.Success();
     }
 
-    public async Task<TaskErrorResult<TaskDTO>> GetTasksByProjectIdAsync(Guid projectId)
+    public async Task<TaskErrorResult<IEnumerable<TaskDTO>>> GetTasksByProjectIdAsync(Guid projectId)
     {
         _logger.LogInformation("Fetching tasks by Project ID: {ProjectId}", projectId);
 
         if (!await _unitOfWork.ProjectRepository.ExistsAsync(projectId))
         {
             _logger.LogWarning("Project with ID {ProjectId} not found.", projectId);
-            return TaskErrorResult<TaskDTO>.Failure(TaskErrorType.ErrorProjectNotFound, "Project not found.");
+            return TaskErrorResult<IEnumerable<TaskDTO>>.Failure(TaskErrorType.ErrorProjectNotFound, "Project not found.");
         }
 
         var tasks = await _unitOfWork.TaskRepository.GetByProjectIdAsync(projectId);
         if (tasks == null || !tasks.Any())
         {
             _logger.LogWarning("No tasks found for Project ID: {ProjectId}", projectId);
-            return TaskErrorResult<TaskDTO>.Failure(TaskErrorType.ErrorTaskNotFound, "No tasks found.");
+            return TaskErrorResult<IEnumerable<TaskDTO>>.Failure(TaskErrorType.ErrorTaskNotFound, "No tasks found.");
         }
 
-        var taskDtos = _mapper.Map<TaskDTO>(tasks);
+        var taskDtos = tasks.Select(task => new TaskDTO
+        {
+            TaskId = task.TaskId,
+            Title = task.Title,
+            Description = task.Description,
+            Status = task.Status,
+            DueDate = task.DueDate,
+            CreatedAt = task.CreatedAt,
+            ProjectId = task.ProjectId,
+            AssignedToUserId = task.AssignedToUserId ?? Guid.Empty,
+            ReviewedToUserId = task.ReviewedToUserId
+        }).ToList();
+        
         _logger.LogInformation("Successfully fetched tasks for Project ID: {ProjectId}", projectId);
-        return TaskErrorResult<TaskDTO>.Success(taskDtos);
+        return TaskErrorResult<IEnumerable<TaskDTO>>.Success(taskDtos);
     }
     
     public async Task<TaskErrorResult<IEnumerable<TaskDTO>>> GetTasksAssignedToUserAsync(Guid userId)
@@ -290,7 +302,7 @@ public class TaskService : ITaskService
             DueDate = task.DueDate,
             ProjectId = task.ProjectId,
             AssignedToUserId = assignedTo.UserId,
-            ReviewedByUserId = reviewedTo.UserId
+            ReviewedToUserId = reviewedTo.UserId
         };
     }
 

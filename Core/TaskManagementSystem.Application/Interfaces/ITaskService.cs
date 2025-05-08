@@ -11,7 +11,7 @@ public interface ITaskService
     Task<TaskErrorResult<TaskDTO>> UpdateTaskAsync(Guid id, TaskDTO taskDto);
     Task<TaskErrorResult<TaskDTO>> DeleteTaskAsync(Guid id);
 
-    Task<TaskErrorResult<TaskDTO>> GetTasksByProjectIdAsync(Guid projectId);
+    Task<TaskErrorResult<IEnumerable<TaskDTO>>> GetTasksByProjectIdAsync(Guid projectId);
     Task<TaskErrorResult<IEnumerable<TaskDTO>>> GetTasksAssignedToUserAsync(Guid userId);
     Task<TaskErrorResult<TaskDTO>> GetTasksReviewedToUserAsync(Guid userId);
     Task<bool> TaskExistsAsync(Guid taskId);
