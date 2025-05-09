@@ -13,7 +13,7 @@ public interface ITaskService
 
     Task<TaskErrorResult<IEnumerable<TaskDTO>>> GetTasksByProjectIdAsync(Guid projectId);
     Task<TaskErrorResult<IEnumerable<TaskDTO>>> GetTasksAssignedToUserAsync(Guid userId);
-    Task<TaskErrorResult<TaskDTO>> GetTasksReviewedToUserAsync(Guid userId);
+    Task<TaskErrorResult<IEnumerable<TaskDTO>>> GetTasksReviewedToUserAsync(Guid userId);
     Task<bool> TaskExistsAsync(Guid taskId);
     Task AssignTaskToUserAsync(Guid taskId, Guid userId);
     Task ReviewTaskToUserAsync(Guid taskId, Guid userId);

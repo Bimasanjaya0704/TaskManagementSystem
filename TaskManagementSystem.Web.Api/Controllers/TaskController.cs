@@ -192,7 +192,7 @@ public class TaskController : ControllerBase
         var result = await _taskService.GetTasksByProjectIdAsync(projectId);
         if (!result.IsSuccess)
         {
-            _logger.LogWarning("End, GetTaskById - Failed: {ErrorMessage}", result.ErrorMessage);
+            _logger.LogWarning("End, GetTasksByProjectId - Failed: {ErrorMessage}", result.ErrorMessage);
             return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
         }
 
@@ -210,6 +210,78 @@ public class TaskController : ControllerBase
         }).ToList();
             
         _logger.LogInformation("End, GetTasksByProjectId : {ProjectId}", projectId);
+        return Ok(new ApiResponse<IEnumerable<TaskResponseDto>>(true, "Success", taskResponseDto));
+    }
+
+    [Authorize(Roles = "User,Admin")]
+    [HttpGet("assigned-tasks/{userId}")]
+    public async Task<IActionResult> GetTasksAssignedToUserAsync(Guid userId)
+    {
+        _logger.LogInformation("Start, GetTasksAssignedToUser : {UserId}", userId);
+
+        var token = GetTokenFromRequest();
+        if (string.IsNullOrEmpty(token))
+        {
+            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
+        }
+
+        var result = await _taskService.GetTasksAssignedToUserAsync(userId);
+        if (!result.IsSuccess)
+        {
+            _logger.LogWarning("End, GetTasksAssignedToUser - Failed: {ErrorMessage}", result.ErrorMessage);
+            return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
+        }
+        
+        var taskResponseDto = result.Data.Select(task => new TaskResponseDto()
+        {
+            TaskId = task.TaskId,
+            Title = task.Title,
+            Description = task.Description,
+            DueDate = task.DueDate,
+            CreatedAt = task.CreatedAt,
+            Status = task.Status,
+            AssignedToUserId = task.AssignedToUserId,
+            ReviewedToUserId = task.ReviewedToUserId,
+            ProjectId = task.ProjectId
+        }).ToList();
+        
+        _logger.LogInformation("End, GetTasksAssignedToUser : {UserId}", userId);
+        return Ok(new ApiResponse<IEnumerable<TaskResponseDto>>(true, "Success", taskResponseDto));
+    }
+    
+    [Authorize(Roles = "User,Admin")]
+    [HttpGet("review-tasks/{userId}")]
+    public async Task<IActionResult> GetTasksReviewedToUserAsync(Guid userId)
+    {
+        _logger.LogInformation("Start, GetTasksReviewedToUser : {UserId}", userId);
+
+        var token = GetTokenFromRequest();
+        if (string.IsNullOrEmpty(token))
+        {
+            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
+        }
+
+        var result = await _taskService.GetTasksReviewedToUserAsync(userId);
+        if (!result.IsSuccess)
+        {
+            _logger.LogWarning("End, GetTasksReviewedToUser - Failed: {ErrorMessage}", result.ErrorMessage);
+            return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
+        }
+        
+        var taskResponseDto = result.Data.Select(task => new TaskResponseDto()
+        {
+            TaskId = task.TaskId,
+            Title = task.Title,
+            Description = task.Description,
+            DueDate = task.DueDate,
+            CreatedAt = task.CreatedAt,
+            Status = task.Status,
+            AssignedToUserId = task.AssignedToUserId,
+            ReviewedToUserId = task.ReviewedToUserId,
+            ProjectId = task.ProjectId
+        }).ToList();
+        
+        _logger.LogInformation("End, GetTasksReviewedToUser : {UserId}", userId);
         return Ok(new ApiResponse<IEnumerable<TaskResponseDto>>(true, "Success", taskResponseDto));
     }
 }

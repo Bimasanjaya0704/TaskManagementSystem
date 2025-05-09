@@ -185,27 +185,38 @@ public class TaskService : ITaskService
         }
 
         var tasks = await _unitOfWork.TaskRepository.GetAssignedToUserAsync(userId);
-        var taskDtos = await Task.WhenAll(tasks.Select(MapToDto));
+        var taskDtos = new List<TaskDTO>();
+        foreach (var task in tasks)
+        {
+            var dto = _mapper.Map<TaskDTO>(task);
+            taskDtos.Add(dto);
+        }
 
-        _logger.LogInformation("Fetched {Count} assigned tasks for user ID: {UserId}", taskDtos.Length, userId);
+        _logger.LogInformation("Fetched {Count} assigned tasks for user ID: {UserId}", taskDtos, userId);
         return TaskErrorResult<IEnumerable<TaskDTO>>.Success(taskDtos);
     }
     
-    public async Task<TaskErrorResult<TaskDTO>> GetTasksReviewedToUserAsync(Guid userId)
+    public async Task<TaskErrorResult<IEnumerable<TaskDTO>>> GetTasksReviewedToUserAsync(Guid userId)
+
     {
         _logger.LogInformation("Fetching tasks reviewed by user with ID: {UserId}", userId);
 
         if (!await _unitOfWork.UserRepository.ExistsAsync(userId))
         {
             _logger.LogWarning("User with ID {UserId} not found.", userId);
-            return TaskErrorResult<TaskDTO>.Failure(TaskErrorType.ErrorUserNotFound, "User not found.");
+            return TaskErrorResult<IEnumerable<TaskDTO>>.Failure(TaskErrorType.ErrorUserNotFound, "User not found.");
         }
 
         var tasks = await _unitOfWork.TaskRepository.GetReviewedToUserAsync(userId);
-        var taskDtos = _mapper.Map<TaskDTO>(tasks);
+        var taskDtos = new List<TaskDTO>();
+        foreach (var task in tasks)
+        {
+            var dto = _mapper.Map<TaskDTO>(task);
+            taskDtos.Add(dto);
+        }
 
         _logger.LogInformation("Fetched reviewed tasks for user ID: {UserId}", userId);
-        return TaskErrorResult<TaskDTO>.Success(taskDtos);
+        return TaskErrorResult<IEnumerable<TaskDTO>>.Success(taskDtos);
     }
     
     public async Task<bool> TaskExistsAsync(Guid taskId)
@@ -285,52 +296,5 @@ public class TaskService : ITaskService
 
         await _unitOfWork.TaskRepository.UpdateTaskAsync(task.TaskId, task);
         _logger.LogInformation("Task status updated for task ID: {TaskId}", taskId);
-    }
-
-
-    private async Task<TaskDTO> MapToDto(TaskEntity task)
-    {
-        var assignedTo = await GetUserDtoByIdAsync(task.AssignedToUserId);
-        var reviewedTo = await GetUserDtoByIdAsync(task.ReviewedToUserId);
-
-        return new TaskDTO
-        {
-            TaskId = task.TaskId,
-            Title = task.Title,
-            Description = task.Description,
-            Status = task.Status,
-            DueDate = task.DueDate,
-            ProjectId = task.ProjectId,
-            AssignedToUserId = assignedTo.UserId,
-            ReviewedToUserId = reviewedTo.UserId
-        };
-    }
-
-    private async Task<UserDTO> GetUserDtoByIdAsync(Guid? userId)
-    {
-        if (!userId.HasValue)
-        {
-            _logger.LogInformation("User ID is null, skipping user fetch.");
-            return null;
-        }
-
-        var user = await _unitOfWork.UserRepository.GetUserByIdAsync(userId.Value);
-        if (user == null)
-        {
-            _logger.LogWarning("User with ID {UserId} not found.", userId.Value);
-            return null;
-        }
-
-        _logger.LogInformation("Fetched user with ID {UserId}", user.UserId);
-
-        return new UserDTO
-        {
-            UserId = user.UserId,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role
-        };
     }
 }
