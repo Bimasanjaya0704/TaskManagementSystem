@@ -43,7 +43,7 @@ public class FriendshipService : IFriendshipService
     public async Task<TaskErrorResult<FriendshipDto>> SendFriendRequestAsync(FriendRequestDto friendRequestDto)
     {
         _logger.LogInformation("Start, Sending friend request from {RequesterId} to {AddresseeUsername}", 
-            friendRequestDto.SenderId, friendRequestDto.AddresseeUsername);
+            friendRequestDto.SenderId, friendRequestDto.ReceiverUsername);
 
         // Check if requester exists
         if (!await _unitOfWork.UserRepository.ExistsAsync(friendRequestDto.SenderId))
@@ -53,10 +53,10 @@ public class FriendshipService : IFriendshipService
         }
 
         // Find addressee by username
-        var addressee = await _unitOfWork.UserRepository.GetByUsernameAsync(friendRequestDto.AddresseeUsername);
+        var addressee = await _unitOfWork.UserRepository.GetByUsernameAsync(friendRequestDto.ReceiverUsername);
         if (addressee == null)
         {
-            _logger.LogWarning("User with username {AddresseeUsername} not found.", friendRequestDto.AddresseeUsername);
+            _logger.LogWarning("User with username {AddresseeUsername} not found.", friendRequestDto.ReceiverUsername);
             return TaskErrorResult<FriendshipDto>.Failure(TaskErrorType.ErrorUserNotFound, "Addressee not found.");
         }
 
@@ -92,7 +92,7 @@ public class FriendshipService : IFriendshipService
         var friendshipDtoResult = _mapper.Map<FriendshipDto>(addedFriendship);
 
         _logger.LogInformation("End, Sending friend request from {RequesterId} to {AddresseeUsername}", 
-            friendRequestDto.SenderId, friendRequestDto.AddresseeUsername);
+            friendRequestDto.SenderId, friendRequestDto.ReceiverUsername);
         return TaskErrorResult<FriendshipDto>.Success(friendshipDtoResult);
     }
     
@@ -110,8 +110,8 @@ public class FriendshipService : IFriendshipService
         // Only the addressee can respond to the request
         if (friendship.ReceiverId != currentUserId)
         {
-        _logger.LogWarning("User {CurrentUserId} is not the addressee of this request.", currentUserId);
-        return TaskErrorResult<FriendshipDto>.Failure(TaskErrorType.ErrorValidation, "You are not the addressee.");
+        _logger.LogWarning("User {CurrentUserId} is not the receiver of this request.", currentUserId);
+        return TaskErrorResult<FriendshipDto>.Failure(TaskErrorType.ErrorValidation, "You are not the receiver.");
         }
 
         // Can only respond to pending requests
@@ -183,7 +183,7 @@ public class FriendshipService : IFriendshipService
             return false;
         }
 
-        await _unitOfWork.FriendRequestRepository.DeleteAsync(friendship.Id);
+        await _unitOfWork.FriendRequestRepository.DeleteAsync(friendship.FriendshipId);
         _logger.LogInformation("End, Removing friendship between User {User1Id} and User {User2Id}", user1Id, user2Id);
         return true;
     }

@@ -65,7 +65,7 @@ namespace TaskManagementSystem.Web.Api.Controllers
                 return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
             }
 
-            var currentUserId = Guid.Parse(token); // Assuming token contains user ID for simplicity
+            var currentUserId = _tokenService.GetUserIdFromToken(token);
             var result = await _friendshipService.RespondToFriendRequestAsync(respondDto, currentUserId);
 
             if (!result.IsSuccess)

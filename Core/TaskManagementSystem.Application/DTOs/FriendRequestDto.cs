@@ -3,5 +3,5 @@
 public class FriendRequestDto
 {
     public Guid SenderId { get; set; }
-    public string AddresseeUsername { get; set; }
+    public string ReceiverUsername { get; set; }
 }

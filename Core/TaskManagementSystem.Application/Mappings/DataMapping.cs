@@ -19,5 +19,8 @@ public class DataMapping : Profile
         CreateMap<ProjectDTO, ProjectEntity>();
         CreateMap<ProjectEntity, ProjectDTO>();
         CreateMap<RegisterDTO, UserEntity>();
+        
+        CreateMap<FriendshipDto, FriendRequestEntity>();
+        CreateMap<FriendRequestEntity, FriendshipDto>();
     }
 }

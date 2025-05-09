@@ -8,7 +8,7 @@ namespace TaskManagementSystem.Domain.Entities;
 public class FriendRequestEntity
 {
     [Key] 
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid FriendshipId { get; set; } = Guid.NewGuid();
 
     public Guid SenderId { get; set; }
     public Guid ReceiverId { get; set; }

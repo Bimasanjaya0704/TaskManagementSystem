@@ -67,7 +67,7 @@ public class FriendRequestRepository : IFriendRequestRepository
 
     public async Task<bool> ExistsAsync(Guid friendRequestId)
     {
-        return await _context.FriendRequest.AnyAsync(f => f.Id == friendRequestId);
+        return await _context.FriendRequest.AnyAsync(f => f.FriendshipId == friendRequestId);
     }
 
 
