@@ -42,5 +42,7 @@ public enum TaskErrorType
     ErrorFriendshipNotFound = 37,
     ErrorFriendshipAlreadyExist = 38,
     ErrorInvalidOperation = 39,
-    ErrorNoPendingRequests = 40
+    ErrorNoPendingRequests = 40,
+    ErrorInvalidRole = 41,
+    ErrorUnauthorized = 42
 }

@@ -5,6 +5,7 @@ using TaskManagementSystem.Application.Enum;
 using TaskManagementSystem.Application.Interfaces;
 using TaskManagementSystem.Application.Result;
 using TaskManagementSystem.Domain.Entities;
+using TaskManagementSystem.Domain.Enum;
 using TaskManagementSystem.Domain.Interfaces;
 
 namespace TaskManagementSystem.Application.Services;
@@ -38,11 +39,22 @@ public class UserService : IUserService
             _logger.LogWarning("Invalid or expired token.");
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
         }
-
+        
         if (userId != id)
         {
             _logger.LogWarning("Invalid user ID: {UserId}", id);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidId, "Invalid user ID.");
+        }
+        
+        var role = _jwtService.GetRoleFromToken(token);
+        if (role == Role.User && userId != id)
+        {
+            var friends = await _unitOfWork.UserRepository.GetFriendsAsync(userId);
+            if (friends == null || !friends.Any(friend => friend.UserId == id))
+            {
+                _logger.LogWarning("User with ID {UserId} is not allowed to access this data.", id);
+                return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to view this user.");
+            }
         }
 
         var userEntity = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
@@ -67,18 +79,33 @@ public class UserService : IUserService
             return TaskErrorResult<IEnumerable<UserDTO>>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
         }
 
-
-        var userEntities = await _unitOfWork.UserRepository.GetAllUserAsync();
-
-        if (userEntities == null || !userEntities.Any())
+        var role = _jwtService.GetRoleFromToken(token);
+        if (role == Role.User)
         {
-            _logger.LogWarning("No users found.");
-            return TaskErrorResult<IEnumerable<UserDTO>>.Failure(TaskErrorType.ErrorUserNotFound, "No users found.");
-        }
+            var friends = await _unitOfWork.UserRepository.GetFriendsAsync(userId);
+            if (friends == null || !friends.Any())
+            {
+                _logger.LogWarning("No friends found.");
+                return TaskErrorResult<IEnumerable<UserDTO>>.Failure(TaskErrorType.ErrorUserNotFound, "No friends found.");
+            }
 
-        var userDtos = _mapper.Map<IEnumerable<UserDTO>>(userEntities);
-        _logger.LogInformation("End, Fetching all users");
-        return TaskErrorResult<IEnumerable<UserDTO>>.Success(userDtos);
+            var userDtos = _mapper.Map<IEnumerable<UserDTO>>(friends);
+            _logger.LogInformation("End, Fetching user friends");
+            return TaskErrorResult<IEnumerable<UserDTO>>.Success(userDtos);
+        }
+        else
+        {
+            var userEntities = await _unitOfWork.UserRepository.GetAllUserAsync();
+            if (userEntities == null || !userEntities.Any())
+            {
+                _logger.LogWarning("No users found.");
+                return TaskErrorResult<IEnumerable<UserDTO>>.Failure(TaskErrorType.ErrorUserNotFound, "No users found.");
+            }
+
+            var userDtos = _mapper.Map<IEnumerable<UserDTO>>(userEntities);
+            _logger.LogInformation("End, Fetching all users");
+            return TaskErrorResult<IEnumerable<UserDTO>>.Success(userDtos);
+        }
     }
 
     public async Task<TaskErrorResult<UserDTO>> CreateUserAsync(CreateUserDtoAdmin createUserDto, string token)
@@ -89,6 +116,13 @@ public class UserService : IUserService
         {
             _logger.LogWarning("Invalid or expired token.");
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
+        }
+        
+        var role = _jwtService.GetRoleFromToken(token);
+        if (role  == Role.User)
+        {
+            _logger.LogWarning("User with Role {Role} is not authorized to create new users.", role);
+            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to create new users.");
         }
 
         var emailExist = await _unitOfWork.UserRepository.ExistsByEmailAsync(createUserDto.Email);
@@ -143,6 +177,14 @@ public class UserService : IUserService
             _logger.LogWarning("Invalid user ID: {UserId}", id);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidId, "Invalid user ID.");
         }
+        
+        var role = _jwtService.GetRoleFromToken(token);
+        if (role == Role.User && userId != id)
+        {
+            _logger.LogWarning("User with Role {Role} is not authorized to update this user.", role);
+            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to update this user.");
+        }
+
 
         var existingUser = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
         if (existingUser == null)

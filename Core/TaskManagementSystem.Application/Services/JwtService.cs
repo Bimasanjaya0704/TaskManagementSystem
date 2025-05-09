@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using TaskManagementSystem.Application.DTOs;
 using TaskManagementSystem.Application.Interfaces;
+using TaskManagementSystem.Domain.Enum;
 
 namespace TaskManagementSystem.Application.Services;
 
@@ -105,4 +106,24 @@ public class JwtService : IJwtService
             return false;
         }
     }
+   
+   public Role GetRoleFromToken(string token)
+   {
+       try
+       {
+           var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+           var roleClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value;
+
+           if (System.Enum.TryParse(roleClaim, out Role role))
+           {
+               return role;
+           }
+           return Role.Unknown; 
+       }
+       catch (Exception ex)
+       {
+           _logger.LogError(ex, "Error parsing role from token.");
+           return Role.Unknown; 
+       }
+   }
 }
