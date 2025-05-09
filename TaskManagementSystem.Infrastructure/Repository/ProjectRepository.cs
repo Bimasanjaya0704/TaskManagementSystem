@@ -22,6 +22,7 @@ public class ProjectRepository : IProjectRepository
         _logger.LogInformation("Start, Fetching all projects from the database.");
 
         var projects = await _appDbContext.Projects
+            .Include(p => p.Tasks)
             .ToListAsync();
 
         _logger.LogInformation("End, Successfully retrieved {Count} projects.", projects.Count);

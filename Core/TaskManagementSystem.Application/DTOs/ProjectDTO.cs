@@ -11,6 +11,7 @@ public class ProjectDTO
     public Guid CreatorUserId { get; set; }
     public ProjectStatus ProjectStatus { get; set; }
     public ProjectPriority ProjectPriority { get; set; }
+    public List<TaskDTO> Tasks { get; set; } = new();
     public DateTime CreatedAt { get; set; }
     public UserDTO Creator { get; set; }
 }
