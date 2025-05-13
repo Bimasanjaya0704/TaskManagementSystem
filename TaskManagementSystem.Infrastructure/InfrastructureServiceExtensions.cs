@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Infrastructure;
 using Infrastructure.Presistence;
+using Infrastructure.Repository;
 using Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -27,9 +28,10 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
-
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IProjectMemberRepository, ProjectMemberRepository>();
+        services.AddScoped<IFriendRequestRepository, FriendRequestRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 
         var jwtSettings = configuration.GetSection("JwtSettings");

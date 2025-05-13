@@ -2,9 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TaskManagementSystem.Domain.Entities;
+using TaskManagementSystem.Domain.Enum;
 using TaskManagementSystem.Domain.Interfaces;
 
-namespace Infrastructure;
+namespace Infrastructure.Repository;
 
 public class UserRepository : IUserRepository
 {
@@ -27,12 +28,12 @@ public class UserRepository : IUserRepository
         return users;
     }
 
-    public async Task<UserEntity?> GetUserByIdAsync(int id)
+    public async Task<UserEntity?> GetUserByIdAsync(Guid id)
     {
         _logger.LogInformation("Start, Fetching user with ID: {UserId}", id);
 
         var user = await _appDbContext.Users
-            .FirstOrDefaultAsync(u => u.Id == id);
+            .FirstOrDefaultAsync(u => u.UserId == id);
 
         if (user == null)
         {
@@ -44,13 +45,13 @@ public class UserRepository : IUserRepository
 
     public async Task<UserEntity> AddUserAsync(UserEntity user)
     {
-        _logger.LogInformation("Adding a new user: {UserName}", user.FirstName);
+        _logger.LogInformation("Adding a new user: {UserName}", user.Username);
         await _appDbContext.Users.AddAsync(user);
         await SaveChangesAsync();
         return user;
     }
 
-    public async Task<UserEntity?> UpdateUserAsync(int id, UserEntity user)
+    public async Task<UserEntity?> UpdateUserAsync(Guid id, UserEntity user)
     {
         _logger.LogInformation("Start, Updating user with ID: {UserId}", id);
 
@@ -67,7 +68,7 @@ public class UserRepository : IUserRepository
         return existingUser;
     }
 
-    public async Task<bool> DeleteUserAsync(int id)
+    public async Task<bool> DeleteUserAsync(Guid id)
     {
         _logger.LogInformation("Start, Deleting user with ID: {UserId}", id);
 
@@ -94,6 +95,63 @@ public class UserRepository : IUserRepository
         }
         _logger.LogInformation("End, Fetching user with email: {Email}", email);
         return user;
+    }
+    
+    public async Task<UserEntity> GetByUsernameAsync(string username)
+    {
+        return await _appDbContext.Users
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
+    }
+    
+    public async Task<bool> ExistsAsync(Guid userId)
+    {
+        return await _appDbContext.Users.AnyAsync(u => u.UserId == userId);
+    }
+    
+    public async Task<int> CountUsersByRoleAsync(Role role)
+    {
+        return await _appDbContext.Users.CountAsync(u => u.Role == role);
+    }
+
+    
+    public async Task<bool> ExistsByUsernameAsync(string username)
+    {
+        return await _appDbContext.Users.AnyAsync(u => u.Username.ToLower() == username.ToLower());
+    }
+    
+    public async Task<bool> ExistsByEmailAsync(string email)
+    {
+        return await _appDbContext.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower());
+    }
+
+    public async Task<IEnumerable<UserEntity>> GetFriendsAsync(Guid userId)
+    {
+        // Ambil semua permintaan pertemanan yang telah diterima
+        var friendships = await _appDbContext.FriendRequest
+            .Where(f => (f.SenderId == userId || f.ReceiverId == userId) &&
+                        f.Status == FriendshipStatus.Accepted)
+            .ToListAsync();
+
+        // Ambil ID teman (selain userId)
+        var friendIds = friendships
+            .Select(f => f.SenderId == userId ? f.ReceiverId : f.SenderId)
+            .ToList();
+
+        // Ambil data user teman-teman
+        var friends = await _appDbContext.Users
+            .Where(u => friendIds.Contains(u.UserId))
+            .ToListAsync();
+
+        return friends;
+    }
+    
+    public async Task<IEnumerable<FriendRequestEntity>> GetPendingFriendRequestsAsync(Guid userId)
+    {
+        return await _appDbContext.FriendRequest
+            .Include(f => f.Sender)
+            .Include(f => f.Receiver)
+            .Where(f => f.ReceiverId == userId && f.Status == FriendshipStatus.Pending)
+            .ToListAsync();
     }
 
     private async Task SaveChangesAsync()

@@ -1,23 +1,32 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TaskManagementSystem.Domain.Enum;
 
 namespace TaskManagementSystem.Domain.Entities;
 
-public class TaskEntity 
+[Table("Tasks")]
+public class TaskEntity
 {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    public Guid TaskId { get; set; } = Guid.NewGuid();
     
-    public string? Title { get; set; }
-    public string? Description { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public TaskProgressStatus Status { get; set; }
     public DateTime DueDate { get; set; }
-    public TaskStatus Status { get; set; }  
+    public DateTime CreatedAt { get; set; }
+    public Guid ProjectId { get; set; }
+    public Guid? AssignedToUserId { get; set; }
+    public Guid? ReviewedToUserId { get; set; }
     
-    public int AssignedToUserId { get; set; }
-    public virtual UserEntity AssignedToUser { get; set; }
-    public int? ReviewedByUserId { get; set; }  
-    public virtual UserEntity? ReviewedByUser { get; set; }
-    public int ProjectId { get; set; }
+    // Navigation properties
     public virtual ProjectEntity Project { get; set; }
+    public virtual UserEntity AssignedTo { get; set; }
+    public virtual UserEntity ReviewedTo { get; set; }
+    
+    public TaskEntity()
+    {
+        Status = TaskProgressStatus.New;
+        CreatedAt = DateTime.UtcNow;
+    }
 }

@@ -9,9 +9,5 @@ public class ProjectRequestDto
     public DateTime DueDate { get; set; }
     public ProjectStatus ProjectStatus { get; set; }
     public ProjectPriority ProjectPriority { get; set; }
-
-    public int CreatedByUserId { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
 }

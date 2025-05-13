@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Cors;
-using Microsoft.Extensions.Logging;
 using TaskManagementSystem.Application.DTOs;
 using TaskManagementSystem.Application.Interfaces;
 
@@ -21,18 +20,18 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDTO registerDto)
+    public async Task<IActionResult> Register([FromBody] CreateUserDto createUserDto)
     {
-        _logger.LogInformation("Start, Registering user with email: {Email}", registerDto.Email);
+        _logger.LogInformation("Start, Registering user with email: {Email}", createUserDto.Email);
 
-        var result = await _authService.RegisterAsync(registerDto);
+        var result = await _authService.RegisterAsync(createUserDto);
         if (!result.IsSuccess)
         {
-            _logger.LogWarning("Registration failed for email: {Email}, Reason: {Reason}", registerDto.Email, result.ErrorMessage);
+            _logger.LogWarning("Registration failed for email: {Email}, Reason: {Reason}", createUserDto.Email, result.ErrorMessage);
             return BadRequest(new { result.ErrorType, result.ErrorMessage });
         }
 
-        _logger.LogInformation("End, User registered successfully: {Email}", registerDto.Email);
+        _logger.LogInformation("End, User registered successfully: {Email}", createUserDto.Email);
         return Ok(result.Data);
     }
 

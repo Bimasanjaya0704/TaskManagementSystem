@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Security.Claims;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +28,7 @@ public class ProjectController : ControllerBase
         _mapper = mapper;
     }
 
-    [Authorize(Roles = "User,Admin")]
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
     [HttpGet]
     public async Task<IActionResult> GetAllProjects()
     {
@@ -53,9 +54,9 @@ public class ProjectController : ControllerBase
         return Ok(new ApiResponse<List<ProjectResponseDto>>(true, "Success", projectResponseDto));
     }
 
-    [Authorize(Roles = "User,Admin")]
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetProjectById(int id)
+    public async Task<IActionResult> GetProjectById(Guid id)
     {
         _logger.LogInformation("Start, GetTaskById: {TaskId}", id);
 
@@ -79,8 +80,8 @@ public class ProjectController : ControllerBase
         return Ok(new ApiResponse<ProjectResponseDto>(true, "Success", projectResponseDto));
     }
 
-    [Authorize(Roles = "User,Admin")]
-    [HttpPost]
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    [HttpPost("create")]
     public async Task<IActionResult> CreateProject([FromBody] ProjectRequestDto projectRequestDto)
     {
         _logger.LogInformation("Start, CreateProject");
@@ -92,8 +93,17 @@ public class ProjectController : ControllerBase
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
 
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            _logger.LogWarning("End, CreateProject - Failed: Invalid or missing User ID in token");
+            return Unauthorized(new ApiResponse<string>(false, "Invalid or missing User ID", null));
+        }
+
         var projectDto = _mapper.Map<ProjectDTO>(projectRequestDto);
-        var result = await _projectService.AddProjectAsync(projectDto);
+        projectDto.CreatorUserId = userId;
+        var result = await _projectService.CreateProjectAsync(projectDto);
 
         if (!result.IsSuccess)
         {
@@ -103,13 +113,13 @@ public class ProjectController : ControllerBase
 
         var projectResponseDto = _mapper.Map<ProjectResponseDto>(result.Data);
 
-        _logger.LogInformation("End, CreateProject - Success: Created Project {ProjectId}", projectResponseDto.Id);
+        _logger.LogInformation("End, CreateProject - Success: Created Project {ProjectId}", projectResponseDto.ProjectId);
         return Ok(new ApiResponse<ProjectResponseDto>(true, "Success", projectResponseDto));
     }
 
-    [Authorize(Roles = "User,Admin")]
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProject(int id, [FromBody] ProjectRequestDto projectRequestDto)
+    public async Task<IActionResult> UpdateProject(Guid id, [FromBody] ProjectRequestDto projectRequestDto)
     {
         _logger.LogInformation("Start, UpdateProject: {ProjectId}", id);
 
@@ -138,13 +148,13 @@ public class ProjectController : ControllerBase
 
         var projectResponseDto = _mapper.Map<ProjectResponseDto>(result.Data);
 
-        _logger.LogInformation("End, UpdateProject - Success: Project updated {ProjectId}", projectResponseDto.Id);
+        _logger.LogInformation("End, UpdateProject - Success: Project updated {ProjectId}", projectResponseDto.ProjectId);
         return Ok(new ApiResponse<ProjectResponseDto>(true, "Project updated successfully.", projectResponseDto));
     }
 
-    [Authorize(Roles = "User,Admin")]
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProject(int id)
+    public async Task<IActionResult> DeleteProject(Guid id)
     {
         _logger.LogInformation("Start, DeleteProject: {ProjectId}", id);
 
@@ -165,7 +175,100 @@ public class ProjectController : ControllerBase
 
         var deletedTask = _mapper.Map<ProjectResponseDto>(result.Data);
 
-        _logger.LogInformation("End, DeleteProject - Success: Project deleted {ProjectId}", deletedTask.Id);
+        _logger.LogInformation("End, DeleteProject - Success: Project deleted {ProjectId}", deletedTask.ProjectId);
         return Ok(new ApiResponse<ProjectResponseDto>(true, "Project deleted successfully.", deletedTask));
     }
+    
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    [HttpGet("{projectId}/members")]
+    public async Task<IActionResult> GetProjectMembers(Guid projectId)
+    {
+        _logger.LogInformation("Start, GetProjectMembers: {ProjectId}", projectId);
+
+        var token = _tokenService.GetTokenFromHeader(Request);
+        if (string.IsNullOrEmpty(token))
+        {
+            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
+        }
+
+        var result = await _projectService.GetProjectMembersAsync(projectId);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
+        }
+
+        return Ok(new ApiResponse<IEnumerable<ProjectMemberDto>>(true, "Success", result.Data));
+    }
+    
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    [HttpPost("{projectId}/invite")]
+    public async Task<IActionResult> InviteUserToProject(Guid projectId, [FromBody] InviteUserToProjectDto inviteDto)
+    {
+        _logger.LogInformation("Start, InviteUserToProject: {ProjectId}", projectId);
+
+        var token = _tokenService.GetTokenFromHeader(Request);
+        if (string.IsNullOrEmpty(token))
+        {
+            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
+        }
+
+        var inviterUserId = _tokenService.GetUserIdFromToken(token);
+        if (inviterUserId == Guid.Empty)
+        {
+            return Unauthorized(new ApiResponse<string>(false, "Invalid user ID in token.", null));
+        }
+
+        if (inviteDto == null || inviteDto.ProjectId != projectId)
+        {
+            return BadRequest(new ApiResponse<string>(false, "Invalid invite data.", null));
+        }
+
+        var result = await _projectService.InviteUserToProjectAsync(inviteDto, inviterUserId);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new ApiResponse<string>(false, result.ErrorMessage, null));
+        }
+
+        return Ok(new ApiResponse<ProjectMemberDto>(true, "User invited successfully.", result.Data));
+    }
+    
+    [Authorize(Roles = "User,Admin,SuperAdmin")]
+    [HttpDelete("{projectId}/remove-member/{userId}")]
+    public async Task<IActionResult> RemoveUserFromProject(Guid projectId, Guid userId)
+    {
+        _logger.LogInformation("Start, RemoveUserFromProject: {ProjectId}, {UserId}", projectId, userId);
+
+        var token = _tokenService.GetTokenFromHeader(Request);
+        if (string.IsNullOrEmpty(token))
+        {
+            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
+        }
+
+        var currentUserId = _tokenService.GetUserIdFromToken(token);
+        if (currentUserId == Guid.Empty)
+        {
+            return Unauthorized(new ApiResponse<string>(false, "Invalid user ID in token.", null));
+        }
+
+        try
+        {
+            await _projectService.RemoveUserFromProjectAsync(projectId, userId, currentUserId);
+            return Ok(new ApiResponse<string>(true, "User removed from project.", null));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new ApiResponse<string>(false, ex.Message, null));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new ApiResponse<string>(false, ex.Message, null));
+        }
+    }
+
+    
+
 }

@@ -10,14 +10,18 @@ public class UnitOfWork : IUnitOfWork
     public ITaskRepository TaskRepository { get; }
     public IUserRepository UserRepository { get; }
     public IProjectRepository ProjectRepository { get; }
+    public IProjectMemberRepository ProjectMemberRepository { get; }
+    public IFriendRequestRepository FriendRequestRepository { get; }
     public IPasswordHasher PasswordHasher { get; }
 
-    public UnitOfWork(AppDbContext appDbContext, ITaskRepository taskRepository, IUserRepository userRepository, IProjectRepository projectRepository, IPasswordHasher passwordHasher)
+    public UnitOfWork(AppDbContext appDbContext, ITaskRepository taskRepository, IUserRepository userRepository, IProjectRepository projectRepository, IProjectMemberRepository projectMemberRepository, IFriendRequestRepository friendRequestRepository, IPasswordHasher passwordHasher)
     {
         _appDbContext = appDbContext;
         TaskRepository = taskRepository;
         UserRepository = userRepository;
         ProjectRepository = projectRepository;
+        ProjectMemberRepository = projectMemberRepository;
+        FriendRequestRepository = friendRequestRepository;
         PasswordHasher = passwordHasher;
     }
 

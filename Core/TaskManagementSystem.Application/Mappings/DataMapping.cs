@@ -12,18 +12,15 @@ public class DataMapping : Profile
         CreateMap<TaskDTO, TaskEntity>();
 
         CreateMap<UserEntity, UserDTO>()
-            .ForMember(dest => dest.AssignedTasks, opt => opt.MapFrom(src => src.AssignedTasks))  
-            .ForMember(dest => dest.ReviewedTasks, opt => opt.MapFrom(src => src.ReviewedTasks));
-        CreateMap<UserDTO, UserEntity>();
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
+        CreateMap<UserDTO, UserEntity>()
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId));
 
-        CreateMap<ProjectDTO, ProjectEntity>()
-            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
-
-        CreateMap<ProjectEntity, ProjectDTO>()
-            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
-
+        CreateMap<ProjectDTO, ProjectEntity>();
+        CreateMap<ProjectEntity, ProjectDTO>();
         CreateMap<RegisterDTO, UserEntity>();
+        
+        CreateMap<FriendshipDto, FriendRequestEntity>();
+        CreateMap<FriendRequestEntity, FriendshipDto>();
     }
 }
