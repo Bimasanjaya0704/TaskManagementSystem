@@ -1,5 +1,43 @@
+# Build
 bin/
 obj/
-/packages/
+packages/
+
+# ASP.NET Core Secrets and Local Configs
+**/appsettings.Development.json
+**/appsettings.Local.json
+secrets.json
+
+# User secrets (stored in user profile)
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# JetBrains Rider
+.idea/
+*.sln.iml
 riderModule.iml
+/.idea/
 /_ReSharper.Caches/
+
+# Visual Studio Code
+.vscode/
+
+# Logs
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Test Coverage
+coverage/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Docker (optional)
+.dockerignore
+docker-compose.override.yml
