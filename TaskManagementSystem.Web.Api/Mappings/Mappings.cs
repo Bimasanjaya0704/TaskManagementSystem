@@ -16,6 +16,9 @@ namespace TaskManagementSystem.Web.Api.Mappings
 
             CreateMap<UserRequestDto, UserDTO>();
             CreateMap<UserDTO, UserResponseDto>();
+            
+            CreateMap<AuthenticatedUser, AuthenticatedUserDTO>();
+            CreateMap<AuthenticatedUserDTO, AuthenticatedUser>();
         }
     }
 }

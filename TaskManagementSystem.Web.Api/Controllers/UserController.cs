@@ -15,14 +15,14 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly ILogger<UserController> _logger;
-    private readonly TokenService _tokenService;
+    private readonly IUserContextService _userContextService;
     private readonly IMapper _mapper;
 
-    public UserController(IUserService userService, ILogger<UserController> logger, TokenService tokenService, IMapper mapper)
+    public UserController(IUserService userService, ILogger<UserController> logger, IUserContextService userContextService, IMapper mapper)
     {
         _userService = userService;
         _logger = logger;
-        _tokenService = tokenService;
+        _userContextService = userContextService;
         _mapper = mapper;
     }
 
@@ -32,14 +32,7 @@ public class UserController : ControllerBase
     {
         _logger.LogInformation("Start, GetAllUsers");
 
-        var token = _tokenService.GetTokenFromHeader(Request);
-        if (string.IsNullOrEmpty(token))
-        {
-            _logger.LogWarning("End, GetAllUsers - Failed: Token is missing");
-            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
-        }
-
-        var result = await _userService.GetAllUsersAsync(token);
+        var result = await _userService.GetAllUsersAsync();
         if (!result.IsSuccess)
         {
             _logger.LogWarning("End, GetAllUsers - Failed: {ErrorMessage}", result.ErrorMessage);
@@ -57,15 +50,8 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GetUserById(Guid id)
     {
         _logger.LogInformation("Start, GetUserById: {UserId}", id);
-
-        var token = _tokenService.GetTokenFromHeader(Request);
-        if (string.IsNullOrEmpty(token))
-        {
-            _logger.LogWarning("End, GetUserById - Failed: Token is missing");
-            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
-        }
-
-        var result = await _userService.GetUserByIdAsync(id, token);
+        
+        var result = await _userService.GetUserByIdAsync(id);
         if (!result.IsSuccess)
         {
             _logger.LogWarning("End, GetUserById - Failed: {ErrorMessage}", result.ErrorMessage);
@@ -84,14 +70,7 @@ public class UserController : ControllerBase
     {
         _logger.LogInformation("Start, UpdateUser: {UserId}", id);
 
-        var token = _tokenService.GetTokenFromHeader(Request);
-        if (string.IsNullOrEmpty(token))
-        {
-            _logger.LogWarning("End, UpdateUser - Failed: Token is missing");
-            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
-        }
-
-        var result = await _userService.UpdateUserAsync(id, token, userUpdateDto);
+        var result = await _userService.UpdateUserAsync(id, userUpdateDto);
         if (!result.IsSuccess)
         {
             _logger.LogWarning("End, UpdateUser - Failed: {ErrorMessage}", result.ErrorMessage);
@@ -110,15 +89,8 @@ public class UserController : ControllerBase
     public async Task<IActionResult> DeleteUser(Guid id)
     {
         _logger.LogInformation("Start, DeleteUser: {UserId}", id);
-
-        var token = _tokenService.GetTokenFromHeader(Request);
-        if (string.IsNullOrEmpty(token))
-        {
-            _logger.LogWarning("End, DeleteUser - Failed: Token is missing");
-            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
-        }
-
-        var result = await _userService.DeleteUserAsync(id, token);
+        
+        var result = await _userService.DeleteUserAsync(id);
         if (!result.IsSuccess)
         {
             _logger.LogWarning("End, DeleteUser - Failed: {ErrorMessage}", result.ErrorMessage);
@@ -134,15 +106,8 @@ public class UserController : ControllerBase
     public async Task<IActionResult> GetUserByEmail(string email)
     {
         _logger.LogInformation("Start, GetUserByEmail: {Email}", email);
-
-        var token = _tokenService.GetTokenFromHeader(Request);
-        if (string.IsNullOrEmpty(token))
-        {
-            _logger.LogWarning("End, GetUserByEmail - Failed: Token is missing");
-            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
-        }
-
-        var result = await _userService.GetUserByEmailAsync(email, token);
+        
+        var result = await _userService.GetUserByEmailAsync(email);
         if (!result.IsSuccess)
         {
             _logger.LogWarning("End, GetUserByEmail - Failed: {ErrorMessage}", result.ErrorMessage);
@@ -161,14 +126,7 @@ public class UserController : ControllerBase
     {
         _logger.LogInformation("Start, GetUserByUsername: {Username}", username);
 
-        var token = _tokenService.GetTokenFromHeader(Request);
-        if (string.IsNullOrEmpty(token))
-        {
-            _logger.LogWarning("End, GetUserByUsername - Failed: Token is missing");
-            return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
-        }
-
-        var result = await _userService.GetUserByUsernameAsync(username, token);
+        var result = await _userService.GetUserByUsernameAsync(username);
         if (!result.IsSuccess)
         {
             _logger.LogWarning("End, GetUserByUsername - Failed: {ErrorMessage}", result.ErrorMessage);

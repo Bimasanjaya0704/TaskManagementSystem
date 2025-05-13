@@ -10,6 +10,14 @@ using TaskManagementSystem.Web.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddUserSecrets<Program>(optional: true) 
+    .AddEnvironmentVariables();            
+
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
         {
@@ -97,6 +105,7 @@ if (app.Environment.IsDevelopment())
 /*app.UseHttpsRedirection();*/
 app.UseRouting();
 app.UseCors();
+app.UseMiddleware<JwtMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 

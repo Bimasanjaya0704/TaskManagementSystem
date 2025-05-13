@@ -13,43 +13,26 @@ namespace TaskManagementSystem.Application.Services;
 public class UserService : IUserService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserContextService _userContextService;
     private readonly IMapper _mapper;
     private readonly ILogger<UserService> _logger;
-    private readonly IJwtService _jwtService;
 
-    public UserService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<UserService> logger, IJwtService jwtService)
+    public UserService(IUnitOfWork unitOfWork, IUserContextService userContextService, IMapper mapper, ILogger<UserService> logger)
     {
         _unitOfWork = unitOfWork;
+        _userContextService = userContextService;
         _mapper = mapper;
         _logger = logger;
-        _jwtService = jwtService;
     }
-
-    private bool ValidateToken(string token, out Guid userId)
-    {
-        return _jwtService.ValidateToken(token, out userId);
-    }
-
-    public async Task<TaskErrorResult<UserDTO>> GetUserByIdAsync(Guid id, string token)
+    
+    public async Task<TaskErrorResult<UserDTO>> GetUserByIdAsync(Guid id)
     {
         _logger.LogInformation("Start, Fetching user with ID: {UserId}", id);
 
-        if (!ValidateToken(token, out Guid userId))
+        var role = _userContextService.GetCurrentUserRole();
+        if (role == Role.User)
         {
-            _logger.LogWarning("Invalid or expired token.");
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
-        }
-        
-        if (userId != id)
-        {
-            _logger.LogWarning("Invalid user ID: {UserId}", id);
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidId, "Invalid user ID.");
-        }
-        
-        var role = _jwtService.GetRoleFromToken(token);
-        if (role == Role.User && userId != id)
-        {
-            var friends = await _unitOfWork.UserRepository.GetFriendsAsync(userId);
+            var friends = await _unitOfWork.UserRepository.GetFriendsAsync(id);
             if (friends == null || !friends.Any(friend => friend.UserId == id))
             {
                 _logger.LogWarning("User with ID {UserId} is not allowed to access this data.", id);
@@ -69,20 +52,22 @@ public class UserService : IUserService
         return TaskErrorResult<UserDTO>.Success(userDto);
     }
 
-    public async Task<TaskErrorResult<IEnumerable<UserDTO>>> GetAllUsersAsync(string token)
+    public async Task<TaskErrorResult<IEnumerable<UserDTO>>> GetAllUsersAsync()
     {
         _logger.LogInformation("Start, Fetching all users");
 
-        if (!ValidateToken(token, out Guid userId))
-        {
-            _logger.LogWarning("Invalid or expired token.");
-            return TaskErrorResult<IEnumerable<UserDTO>>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
-        }
+        var role = _userContextService.GetCurrentUserRole();
+        var currentUserId = _userContextService.GetCurrentUserId();
 
-        var role = _jwtService.GetRoleFromToken(token);
+        if (role == Role.Unknown)
+        {
+            _logger.LogWarning("Role Unknown.");
+            return TaskErrorResult<IEnumerable<UserDTO>>.Failure(TaskErrorType.ErrorUnauthorized, "Role Unknown.");
+        }
+        
         if (role == Role.User)
         {
-            var friends = await _unitOfWork.UserRepository.GetFriendsAsync(userId);
+            var friends = await _unitOfWork.UserRepository.GetFriendsAsync(currentUserId);
             if (friends == null || !friends.Any())
             {
                 _logger.LogWarning("No friends found.");
@@ -108,17 +93,11 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<TaskErrorResult<UserDTO>> CreateUserAsync(CreateUserDtoAdmin createUserDto, string token)
+    public async Task<TaskErrorResult<UserDTO>> CreateUserAsync(CreateUserDtoAdmin createUserDto)
     {
         _logger.LogInformation("Start, Creating User");
 
-        if (!ValidateToken(token, out Guid userId))
-        {
-            _logger.LogWarning("Invalid or expired token.");
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
-        }
-        
-        var role = _jwtService.GetRoleFromToken(token);
+        var role = _userContextService.GetCurrentUserRole();
         if (role  == Role.User)
         {
             _logger.LogWarning("User with Role {Role} is not authorized to create new users.", role);
@@ -162,30 +141,17 @@ public class UserService : IUserService
     }
 
 
-    public async Task<TaskErrorResult<UserDTO>> UpdateUserAsync(Guid id, string token, UpdateUserDto userDto)
+    public async Task<TaskErrorResult<UserDTO>> UpdateUserAsync(Guid id, UpdateUserDto userDto)
     {
         _logger.LogInformation("Start, Updating user with ID: {UserId}", id);
 
-        if (!ValidateToken(token, out Guid userId))
-        {
-            _logger.LogWarning("Invalid or expired token.");
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
-        }
-
-        if (userId != id )
-        {
-            _logger.LogWarning("Invalid user ID: {UserId}", id);
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidId, "Invalid user ID.");
-        }
-        
-        var role = _jwtService.GetRoleFromToken(token);
-        if (role == Role.User && userId != id)
+        var role = _userContextService.GetCurrentUserRole();
+        if (role == Role.User)
         {
             _logger.LogWarning("User with Role {Role} is not authorized to update this user.", role);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to update this user.");
         }
-
-
+        
         var existingUser = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
         if (existingUser == null)
         {
@@ -202,22 +168,10 @@ public class UserService : IUserService
         return TaskErrorResult<UserDTO>.Success(updatedUserDto);
     }
 
-    public async Task<TaskErrorResult<UserDTO>> DeleteUserAsync(Guid id, string token)
+    public async Task<TaskErrorResult<UserDTO>> DeleteUserAsync(Guid id)
     {
         _logger.LogInformation("Start, Deleting user with ID: {UserId}", id);
-
-        if (!ValidateToken(token, out Guid userId))
-        {
-            _logger.LogWarning("Invalid or expired token.");
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
-        }
-
-        if (userId != id)
-        {
-            _logger.LogWarning("Invalid user ID: {UserId}", id);
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidId, "Invalid user ID.");
-        }
-
+        
         var existingUser = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
         if (existingUser == null)
         {
@@ -237,16 +191,10 @@ public class UserService : IUserService
         return TaskErrorResult<UserDTO>.Success();
     }
 
-    public async Task<TaskErrorResult<UserDTO>> GetUserByEmailAsync(string email, string token)
+    public async Task<TaskErrorResult<UserDTO>> GetUserByEmailAsync(string email)
     {
         _logger.LogInformation("Start, Get user with Email: {Email}", email);
-
-        if (!ValidateToken(token, out Guid userId))
-        {
-            _logger.LogWarning("Invalid or expired token.");
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
-        }
-
+        
         if (string.IsNullOrWhiteSpace(email))
         {
             _logger.LogWarning("Invalid email: {Email}", email);
@@ -265,15 +213,9 @@ public class UserService : IUserService
         return TaskErrorResult<UserDTO>.Success(userDto);
     }
 
-    public async Task<TaskErrorResult<UserDTO>> GetUserByUsernameAsync(string username, string token)
+    public async Task<TaskErrorResult<UserDTO>> GetUserByUsernameAsync(string username)
     {
         _logger.LogInformation("Start, Get user with Username: {Username}", username);
-        
-        if (!ValidateToken(token, out Guid userId))
-        {
-            _logger.LogWarning("Invalid or expired token.");
-            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid token.");
-        }
         
         if (string.IsNullOrWhiteSpace(username))
         {
