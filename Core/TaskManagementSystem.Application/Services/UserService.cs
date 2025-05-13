@@ -32,6 +32,12 @@ public class UserService : IUserService
         var currentRole = _userContextService.GetCurrentUserRole();
         var currentUserId = _userContextService.GetCurrentUserId();
         
+        if (currentRole == Role.Unknown)
+        {
+            _logger.LogWarning("Role Unknown.");
+            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "Role Unknown.");
+        }
+        
         if (currentRole == Role.User && id != currentUserId)
         {
             var friends = await _unitOfWork.UserRepository.GetFriendsAsync(currentUserId);
@@ -58,16 +64,16 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Start, Fetching all users");
 
-        var role = _userContextService.GetCurrentUserRole();
+        var currentRole = _userContextService.GetCurrentUserRole();
         var currentUserId = _userContextService.GetCurrentUserId();
 
-        if (role == Role.Unknown)
+        if (currentRole == Role.Unknown)
         {
             _logger.LogWarning("Role Unknown.");
             return TaskErrorResult<IEnumerable<UserDTO>>.Failure(TaskErrorType.ErrorUnauthorized, "Role Unknown.");
         }
         
-        if (role == Role.User)
+        if (currentRole == Role.User)
         {
             var friends = await _unitOfWork.UserRepository.GetFriendsAsync(currentUserId);
             if (friends == null || !friends.Any())

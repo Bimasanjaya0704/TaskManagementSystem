@@ -13,12 +13,14 @@ namespace TaskManagementSystem.Application.Services;
 public class ProjectService : IProjectService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserContextService _userContextService;
     private readonly IMapper _mapper;
     private readonly ILogger<ProjectService> _logger;
 
-    public ProjectService(IUnitOfWork unitOfWork, IMapper mapper, ILogger<ProjectService> logger)
+    public ProjectService(IUnitOfWork unitOfWork, IUserContextService userContextService, IMapper mapper, ILogger<ProjectService> logger)
     {
         _unitOfWork = unitOfWork;
+        _userContextService = userContextService;
         _mapper = mapper;
         _logger = logger;
     }
@@ -26,6 +28,15 @@ public class ProjectService : IProjectService
     public async Task<TaskErrorResult<ProjectDTO>> GetProjectByIdAsync(Guid id)
     {
         _logger.LogInformation("Start, Fetching project with ID: {ProjectId}", id);
+        
+        var userId = _userContextService.GetCurrentUserId();
+
+        var isMember = await _unitOfWork.ProjectRepository.IsUserMemberAsync(id, userId);
+        if (!isMember)
+        {
+            _logger.LogWarning("User with ID {UserId} is not a member of project with ID: {ProjectId}.", userId, id);
+            return TaskErrorResult<ProjectDTO>.Failure(TaskErrorType.ErrorUnauthorizedMember, "User is not a member of the project.");
+        }
 
         var projectEntity = await _unitOfWork.ProjectRepository.GetProjectByIdAsync(id);
         if (projectEntity == null)
@@ -42,7 +53,27 @@ public class ProjectService : IProjectService
     public async Task<TaskErrorResult<IEnumerable<ProjectDTO>>> GetAllProjectAsync()
     {
         _logger.LogInformation("Start, Fetching all projects");
-        var projectEntities = await _unitOfWork.ProjectRepository.GetAllProjectsAsync();
+
+        var currentUserId = _userContextService.GetCurrentUserId();
+        var currentRole = _userContextService.GetCurrentUserRole();
+        IEnumerable<ProjectEntity> projectEntities;
+        
+        if (currentRole == Role.Unknown)
+        {
+            _logger.LogWarning("Role Unknown.");
+            return TaskErrorResult<IEnumerable<ProjectDTO>>.Failure(TaskErrorType.ErrorUnauthorized, "Role Unknown.");
+        }        
+        if (currentRole == Role.User)
+        {
+            _logger.LogInformation("Role user detected. Fetching only projects where user with ID {UserId} is a member.", currentUserId);
+            projectEntities = await _unitOfWork.ProjectRepository.GetByUserIdAsync(currentUserId);
+        }
+        else
+        {
+            _logger.LogInformation("Role admin or elevated role detected. Fetching all projects.");
+            projectEntities = await _unitOfWork.ProjectRepository.GetAllProjectsAsync();
+        }
+        
 
         if (projectEntities == null || !projectEntities.Any())
         {
@@ -52,23 +83,6 @@ public class ProjectService : IProjectService
 
         var projectDtos = _mapper.Map<IEnumerable<ProjectDTO>>(projectEntities);
         _logger.LogInformation("End, Fetching all projects");
-        return TaskErrorResult<IEnumerable<ProjectDTO>>.Success(projectDtos);
-    }
-    
-    public async Task<TaskErrorResult<IEnumerable<ProjectDTO>>> GetUserProjectsAsync(Guid userId)
-    {
-        _logger.LogInformation("Start,GetUserProjects project with ID: {UserId}", userId);
-        
-        var projectEntity = await _unitOfWork.ProjectRepository.GetByUserIdAsync(userId);
-        if (projectEntity == null)
-        {
-            _logger.LogWarning("Project with ID {userId} not found.", userId);
-            return TaskErrorResult<IEnumerable<ProjectDTO>>.Failure(TaskErrorType.ErrorProjectNotFound, "Project not found.");
-        }
-        
-        _logger.LogInformation("End,GetUserProjects project with ID: {UserId}", userId);
-        var projectDtos = await Task.WhenAll(projectEntity.Select(MapToDto));
-        
         return TaskErrorResult<IEnumerable<ProjectDTO>>.Success(projectDtos);
     }
 
