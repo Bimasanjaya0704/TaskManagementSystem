@@ -108,6 +108,12 @@ public class UserRepository : IUserRepository
         return await _appDbContext.Users.AnyAsync(u => u.UserId == userId);
     }
     
+    public async Task<int> CountUsersByRoleAsync(Role role)
+    {
+        return await _appDbContext.Users.CountAsync(u => u.Role == role);
+    }
+
+    
     public async Task<bool> ExistsByUsernameAsync(string username)
     {
         return await _appDbContext.Users.AnyAsync(u => u.Username.ToLower() == username.ToLower());

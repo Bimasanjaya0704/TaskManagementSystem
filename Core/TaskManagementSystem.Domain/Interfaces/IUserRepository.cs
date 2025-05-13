@@ -1,4 +1,5 @@
 ﻿using TaskManagementSystem.Domain.Entities;
+using TaskManagementSystem.Domain.Enum;
 
 namespace TaskManagementSystem.Domain.Interfaces;
 
@@ -12,6 +13,7 @@ public interface IUserRepository
     Task<UserEntity> GetUserByEmailAsync(string email);
     Task<UserEntity> GetByUsernameAsync(string username);
     Task<bool> ExistsAsync(Guid userId);
+    Task<int> CountUsersByRoleAsync(Role role);
     Task<bool> ExistsByUsernameAsync(string username);
     Task<bool> ExistsByEmailAsync(string email);
 

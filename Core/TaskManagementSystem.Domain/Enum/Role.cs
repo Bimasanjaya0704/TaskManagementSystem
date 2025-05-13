@@ -5,6 +5,6 @@ public enum Role
     SuperAdmin = 0,
     Admin = 1,
     Manager = 2,
-    User = 4,
-    Unknown = 5
+    User = 3,
+    Unknown = 4
 }

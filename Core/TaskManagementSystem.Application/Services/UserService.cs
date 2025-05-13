@@ -24,18 +24,20 @@ public class UserService : IUserService
         _mapper = mapper;
         _logger = logger;
     }
-    
+
     public async Task<TaskErrorResult<UserDTO>> GetUserByIdAsync(Guid id)
     {
         _logger.LogInformation("Start, Fetching user with ID: {UserId}", id);
 
-        var role = _userContextService.GetCurrentUserRole();
-        if (role == Role.User)
+        var currentRole = _userContextService.GetCurrentUserRole();
+        var currentUserId = _userContextService.GetCurrentUserId();
+        
+        if (currentRole == Role.User && id != currentUserId)
         {
-            var friends = await _unitOfWork.UserRepository.GetFriendsAsync(id);
+            var friends = await _unitOfWork.UserRepository.GetFriendsAsync(currentUserId);
             if (friends == null || !friends.Any(friend => friend.UserId == id))
             {
-                _logger.LogWarning("User with ID {UserId} is not allowed to access this data.", id);
+                _logger.LogWarning("User with ID {UserId} is not allowed to access user {RequestedUserId}.", currentUserId, id);
                 return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to view this user.");
             }
         }
@@ -98,7 +100,7 @@ public class UserService : IUserService
         _logger.LogInformation("Start, Creating User");
 
         var role = _userContextService.GetCurrentUserRole();
-        if (role  == Role.User)
+        if (role  == Role.User || role == Role.Unknown)
         {
             _logger.LogWarning("User with Role {Role} is not authorized to create new users.", role);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to create new users.");
@@ -132,6 +134,7 @@ public class UserService : IUserService
         };
 
         await _unitOfWork.UserRepository.AddUserAsync(userEntity);
+        await _unitOfWork.CommitAsync();
 
         var userDto = _mapper.Map<UserDTO>(userEntity);
 
@@ -145,10 +148,12 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Start, Updating user with ID: {UserId}", id);
 
-        var role = _userContextService.GetCurrentUserRole();
-        if (role == Role.User)
+        var currentRole = _userContextService.GetCurrentUserRole();
+        var currentUserId = _userContextService.GetCurrentUserId();
+        
+        if (currentRole == Role.User && id != currentUserId)
         {
-            _logger.LogWarning("User with Role {Role} is not authorized to update this user.", role);
+            _logger.LogWarning("User with ID {UserId} is not authorized to update user {TargetUserId}.", currentUserId, id);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to update this user.");
         }
         
@@ -172,11 +177,29 @@ public class UserService : IUserService
     {
         _logger.LogInformation("Start, Deleting user with ID: {UserId}", id);
         
+        var currentRole = _userContextService.GetCurrentUserRole();
+        var currentUserId = _userContextService.GetCurrentUserId();
+        if (currentRole == Role.User && id != currentUserId)
+        {
+            _logger.LogWarning("User with ID {UserId} is not authorized to delete user {TargetUserId}.", currentUserId, id);
+            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to delete this user.");
+        }
+        
         var existingUser = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
         if (existingUser == null)
         {
             _logger.LogWarning("User with ID {UserId} not found.", id);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUserNotFound, "User not found.");
+        }
+        
+        if (existingUser.Role == Role.Admin)
+        {
+            var adminCount = await _unitOfWork.UserRepository.CountUsersByRoleAsync(Role.Admin);
+            if (adminCount <= 1)
+            {
+                _logger.LogWarning("Cannot delete the last admin user.");
+                return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorDeleteUser, "Cannot delete the last admin user.");
+            }
         }
 
         var deleted = await _unitOfWork.UserRepository.DeleteUserAsync(id);
@@ -235,5 +258,4 @@ public class UserService : IUserService
 
         return TaskErrorResult<UserDTO>.Success(userDto);
     }
-
 }
