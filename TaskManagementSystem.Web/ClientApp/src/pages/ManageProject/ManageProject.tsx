@@ -26,13 +26,11 @@ const ManageProject = () => {
     const fetchProjects = async () => {
         try {
             if (!token) throw new Error("Token is required.");
-            const response = await getAllProjects(token);
+            const response = await getAllProjects();
             console.log("Projects Data:", response);
 
             if (response.success && Array.isArray(response.data)) {
                 setProjects(response.data);
-            } else {
-                throw new Error("Invalid data format: Expected an array.");
             }
             setLoading(false);
         } catch (err: any) {
@@ -43,7 +41,7 @@ const ManageProject = () => {
     const handleCreateProject = async (newProject: ProjectRequestDto) => {
         try {
             if (!token) throw new Error("Token is required.");
-            await createProject(token, newProject);
+            await createProject(newProject);
             fetchProjects();
         } catch (err: any) {
             setError(err.message);
@@ -108,8 +106,8 @@ const ManageProject = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mt-2 md:mt-6">
                     {projects.map((project) => (
                         <Card
-                            key={project.id}
-                            onClick={() => navigate(`/project/${project.id}`)}
+                            key={project.projectId}
+                            onClick={() => navigate(`/project/${project.projectId}`)}
                             className="bg-white/20 hover:scale-105 cursor-pointer transition-transform duration-300 hover:bg-white/30 duration-500 backdrop-blur-md"
                         >
                             <CardContent className="px-3 md:px-6">

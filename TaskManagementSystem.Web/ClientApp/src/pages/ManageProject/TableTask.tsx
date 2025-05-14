@@ -3,7 +3,7 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 
 
 interface Task {
-    id: number;
+    id: string;
     title: string;
     status: string;
     assignedTo: string;

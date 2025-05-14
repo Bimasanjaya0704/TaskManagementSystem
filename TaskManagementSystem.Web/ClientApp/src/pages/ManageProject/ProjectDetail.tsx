@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getProjectById, getAllUsers } from "../../utils/api";
-import { ProjectResponseDto, UserResponseDto } from "../../types/interfaces";
+import { getProjectById } from "../../utils/api";
+import { ProjectResponseDto } from "../../types/interfaces";
 import { LoadingIcon } from "../../components/LoadingIcon";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -13,41 +13,25 @@ import { Button } from "../../components/ui/button";
 import { FaPlus } from "react-icons/fa";
 
 const ProjectDetail = () => {
-    const { id } = useParams<{ id: string }>();
+    const { projectId } = useParams<{ projectId: string }>();
     const { token } = useAuth();
     const [project, setProject] = useState<ProjectResponseDto | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [users, setUsers] = useState<UserResponseDto[]>([]);
 
     useEffect(() => {
-        if (id && token) {
-            fetchProjectDetail(Number(id));
-            fetchAllUsers();
+        if (projectId && token) {
+            fetchProjectDetail(projectId);
         }
-    }, [id, token]);
+    }, [projectId, token]);
 
-    const fetchAllUsers = async () => {
-        try {
-            if (token) {
-                const response = await getAllUsers(token);
-                if (response.success) {
-                    setUsers(response.data);
-                } else {
-                    throw new Error(response.message || "Failed to fetch users.");
-                }
-            }
-        } catch (err: any) {
-            setError(err.message);
-        }
-    };
 
-    const fetchProjectDetail = async (projectId: number) => {
+    const fetchProjectDetail = async (projectId: string) => {
         try {
             setLoading(true);
             setError(null);
             if (token) {
-                const response = await getProjectById(projectId, token);
+                const response = await getProjectById(projectId);
                 if (response.success) {
                     setProject(response.data);
                 } else {
@@ -62,24 +46,18 @@ const ProjectDetail = () => {
     };
 
     const transformTasksForTable = () => {
-        return project?.tasks.map((task) => ({
+        return project?.tasks?.map((task) => ({
             id: task.id,
             title: task.title || "No Title",
             status: task.status || "Unknown",
-            assignedTo: task.assignedTo ? getUserNameById(task.assignedTo) : "Unassigned",
-            reviewBy: task.reviewedBy ? getUserNameById(task.reviewedBy) : "Not Reviewed",
+            assignedTo: task.assignedTo,
+            reviewBy: task.reviewedBy,
             dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : "No Due Date",
             description: task.description || "No Description",
         })) || [];
     };
-    
-    const getUserNameById = (userId: number): string => {
-        if (!users || users.length === 0) {
-            return "Unknown User";
-        }
-        const user = users.find((user) => user.id === userId);
-        return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
-    };
+
+   
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
@@ -109,8 +87,10 @@ const ProjectDetail = () => {
         }
     };
 
+    // Loading State
     if (loading) return <LoadingIcon />;
 
+    // Error State
     if (error) {
         return (
             <Alert variant="destructive" className="mb-4">
@@ -121,6 +101,7 @@ const ProjectDetail = () => {
         );
     }
 
+    // Main Content
     return (
         <div className="min-h-screen flex items-center justify-center bg-accent-hover p-4 rounded-lg">
             <div className="container mx-auto max-w-6xl p-3 md:p-6 bg-white rounded-lg shadow-lg">
@@ -135,18 +116,18 @@ const ProjectDetail = () => {
                             {project ? (
                                 <div className="text-2xl font-bold text-indigo-700 order-1 md:order-none mt-2 md:mt-0">{project.name}</div>
                             ) : (
-                                <div></div>
+                                <div>No project details available.</div>
                             )}
                         </div>
 
                         <div className="flex items-center gap-2">
                             {project ? (
                                 <>
-                                    <div className={getPriorityColor(project.projectPriority)}>
+                                    <div className={getPriorityColor(project.projectPriority || "")}>
                                         <span className="font-semibold">Priority: </span>
                                         <span>{project.projectPriority}</span>
                                     </div>
-                                    <div className={getStatusColor(project.projectStatus)}>
+                                    <div className={getStatusColor(project.projectStatus || "")}>
                                         <span className="font-semibold">Status: </span>
                                         <span>{project.projectStatus}</span>
                                     </div>
@@ -164,15 +145,11 @@ const ProjectDetail = () => {
                                     <div className="w-full lg:w-1/3 flex flex-col gap-2 md:gap-6">
                                         <div className="md:px-6 px-4 py-3 md:py-4 text-white bg-indigo-700/90 backdrop-blur-md border-2 rounded-lg order-1">
                                             <div className="font-semibold">Created by:</div>
-                                            <div>{getUserNameById(project.createdByUserId)}</div>
-                                            {/* <div className="font-semibold mt-4">Member:</div>
-                                            <div>{getUserNameById(project.createdByUserId)}</div> */}
+                                                <div>{project.creatorUserId}</div>
                                         </div>
                                         <div className="md:py-6 py-3 text-white text-center bg-indigo-700/90 backdrop-blur-md border-2 rounded-lg order-3">
                                             <div className="font-bold">Total Tasks:</div>
-                                            <div className="text-[60px] font-semibold">
-                                                {project.tasks.length}
-                                            </div>
+                                            <div className="text-[60px] font-semibold">{project.tasks.length}</div>
                                         </div>
                                     </div>
                                 ) : (
@@ -196,7 +173,6 @@ const ProjectDetail = () => {
                                 </div>
                                 <div className="bg-white/20 backdrop-blur-md p-2 md:p-4 rounded-lg">
                                     <div className="font-bold">Task Done</div>
-                                    <div className="text-[40px] md:text-[60px"></div>
                                     <div className="text-[40px] md:text-[60px] font-semibold">9</div>
                                 </div>
                                 <div className="bg-white/20 backdrop-blur-md p-2 md:p-4 rounded-lg">

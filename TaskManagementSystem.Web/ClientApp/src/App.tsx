@@ -37,7 +37,7 @@ const App: React.FC = () => {
                 <Route path="/projects" element={<ManageProject />} />
               </Route>
               <Route element={<ProtectedRoute allowedRoles={[ROLE.User]} />}>
-                <Route path="/project/:id" element={<ProjectDetail />} />
+                <Route path="/project/:projectId" element={<ProjectDetail />} />
               </Route>
             </Routes>
           </Layout>
