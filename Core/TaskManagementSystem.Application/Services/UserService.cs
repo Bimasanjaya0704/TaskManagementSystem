@@ -169,6 +169,18 @@ public class UserService : IUserService
             _logger.LogWarning("User with ID {UserId} not found.", id);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUserNotFound, "User not found.");
         }
+        
+        if (!string.IsNullOrWhiteSpace(userDto.Username) && userDto.Username != existingUser.Username)
+        {
+            var usernameExists = await _unitOfWork.UserRepository.ExistsByUsernameAsync(userDto.Username);
+            if (usernameExists)
+            {
+                _logger.LogWarning("Username {Username} already exists.", userDto.Username);
+                return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUsernameIsAlreadyExist, "Username already exists.");
+            }
+
+            existingUser.Username = userDto.Username;
+        }
 
         _mapper.Map(userDto, existingUser);
         await _unitOfWork.UserRepository.UpdateUserAsync(id, existingUser);

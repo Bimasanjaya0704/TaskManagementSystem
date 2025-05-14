@@ -35,24 +35,44 @@ public class AuthService : IAuthService
             _logger.LogWarning("Invalid email: {Email}", createUserDto.Email);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidEmail, "Invalid email.");
         }
-
-        var existingUser = await _unitOfWork.UserRepository.GetUserByEmailAsync(createUserDto.Email);
-        if (existingUser != null)
+        
+        var emailExists = await _unitOfWork.UserRepository.ExistsByEmailAsync(createUserDto.Email);
+        if (emailExists)
         {
             _logger.LogWarning("Email already in use: {Email}", createUserDto.Email);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorEmailAlreadyExists, "Email already in use.");
         }
-
+        
         if (string.IsNullOrWhiteSpace(createUserDto.FirstName) || string.IsNullOrWhiteSpace(createUserDto.LastName))
         {
             _logger.LogWarning("First name or last name is missing: {FirstName} {LastName}", createUserDto.FirstName, createUserDto.LastName);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidName, "First name or last name cannot be empty.");
+        }
+        
+        if (string.IsNullOrWhiteSpace(createUserDto.Username) || createUserDto.Username.Length < 4)
+        {
+            _logger.LogWarning("Username is too short: {Username}", createUserDto.Username);
+            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorInvalidUsername, "Username must be at least 4 characters long.");
+        }
+        
+        var usernameExists = await _unitOfWork.UserRepository.ExistsByUsernameAsync(createUserDto.Username);
+        if (usernameExists)
+        {
+            _logger.LogWarning("Username already in use: {Email}", createUserDto.Username);
+            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUsernameIsAlreadyExist, "Username already in use.");
         }
 
         if (string.IsNullOrWhiteSpace(createUserDto.Password) || !IsValidPassword(createUserDto.Password))
         {
             _logger.LogWarning("Weak password provided for email: {Email} with password {Password}", createUserDto.Email, createUserDto.Password);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorWeakPassword, "Password is too weak. It must have at least 8 characters, including a number, an uppercase letter, and a special character.");
+        }
+
+        var existingUser = await _unitOfWork.UserRepository.GetByUsernameAsync(createUserDto.Username);
+        if (existingUser != null)
+        {
+            _logger.LogWarning("Email already in use: {Email}", createUserDto.Email);
+            return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorEmailAlreadyExists, "Email already in use.");
         }
 
         var hashedPassword = _unitOfWork.PasswordHasher.HashPassword(createUserDto.Password);
@@ -104,7 +124,7 @@ public class AuthService : IAuthService
         if (userEntity == null)
         {
             _logger.LogWarning("Email not found in user: {Email}", loginDto.Email);
-            return TaskErrorResult<AuthResponseDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Email not found in user");
+            return TaskErrorResult<AuthResponseDTO>.Failure(TaskErrorType.ErrorInvalidCredentials, "Invalid credentials.");
         }
 
         var verifyPassword = _unitOfWork.PasswordHasher.VerifyPassword(loginDto.Password, userEntity.PasswordHash);
