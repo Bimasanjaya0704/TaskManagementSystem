@@ -41,6 +41,12 @@ public class ProjectController : ControllerBase
             return Unauthorized(new ApiResponse<string>(false, "Token is missing", null));
         }
         var result = await _projectService.GetAllProjectAsync();
+        
+        if (result.Data == null || !result.Data.Any())
+        {
+            _logger.LogInformation("End, GetAllProjects - No projects found.");
+            return Ok(new ApiResponse<List<ProjectResponseDto>>(true, "No projects found.", null)); 
+        }
 
         if (!result.IsSuccess)
         {
