@@ -162,7 +162,7 @@ public class UserService : IUserService
             _logger.LogWarning("User with ID {UserId} is not authorized to update user {TargetUserId}.", currentUserId, id);
             return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUnauthorized, "You are not authorized to update this user.");
         }
-        
+
         var existingUser = await _unitOfWork.UserRepository.GetUserByIdAsync(id);
         if (existingUser == null)
         {
@@ -178,9 +178,19 @@ public class UserService : IUserService
                 _logger.LogWarning("Username {Username} already exists.", userDto.Username);
                 return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorUsernameIsAlreadyExist, "Username already exists.");
             }
-
-            existingUser.Username = userDto.Username;
         }
+        
+        /*if (!string.IsNullOrWhiteSpace(userDto.Email) && userDto.Email != existingUser.Email)
+        {
+            var emailExists = await _unitOfWork.UserRepository.ExistsByEmailAsync(userDto.Email);
+            if (emailExists)
+            {
+                _logger.LogWarning("Email {Email} already exists.", userDto.Email);
+                return TaskErrorResult<UserDTO>.Failure(TaskErrorType.ErrorEmailAlreadyExists, "Email already exists.");
+            }
+
+            existingUser.Email = userDto.Email;
+        }*/
 
         _mapper.Map(userDto, existingUser);
         await _unitOfWork.UserRepository.UpdateUserAsync(id, existingUser);
