@@ -83,7 +83,6 @@ export enum Status {
   InProgress = "InProgress",
   PendingReview = "PendingReview",
   Done = "Done",
-  Blocked = "Blocked",
   OnHold = "OnHold",
 }
 

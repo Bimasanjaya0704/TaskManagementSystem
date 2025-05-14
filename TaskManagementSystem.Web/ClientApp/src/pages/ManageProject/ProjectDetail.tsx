@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProjectById, getUserById } from "../../utils/api";
-import { ProjectResponseDto } from "../../types/interfaces";
+import { ProjectResponseDto, Status } from "../../types/interfaces";
 import { LoadingIcon } from "../../components/LoadingIcon";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -94,6 +94,9 @@ const ProjectDetail = () => {
         })) || [];
     };
 
+    const getTaskCountByStatus = (status: string) => {
+        return project?.tasks?.filter(task => task.status === status).length || 0;
+    };
 
 
     const getPriorityColor = (priority: string) => {
@@ -201,20 +204,24 @@ const ProjectDetail = () => {
 
                             <div className="w-full mt-2 md:mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center p-3 md:p-6 text-white bg-indigo-700/90 backdrop-blur-md border-2 rounded-lg">
                                 <div className="bg-white/20 backdrop-blur-md p-2 md:p-4 rounded-lg">
-                                    <div className="font-bold">Task New</div>
-                                    <div className="text-[40px] md:text-[60px] font-semibold">12</div>
+                                    <div className="font-bold">{Status.New}</div>
+                                    <div className="text-[40px] md:text-[60px] font-semibold">{getTaskCountByStatus(Status.New)}</div>
                                 </div>
                                 <div className="bg-white/20 backdrop-blur-md p-2 md:p-4 rounded-lg">
-                                    <div className="font-bold">Task InProgress</div>
-                                    <div className="text-[40px] md:text-[60px] font-semibold">10</div>
+                                    <div className="font-bold">{Status.InProgress}</div>
+                                    <div className="text-[40px] md:text-[60px] font-semibold">{getTaskCountByStatus(Status.InProgress)}</div>
                                 </div>
                                 <div className="bg-white/20 backdrop-blur-md p-2 md:p-4 rounded-lg">
-                                    <div className="font-bold">Task Done</div>
+                                    <div className="font-bold">{Status.PendingReview}</div>
+                                    <div className="text-[40px] md:text-[60px] font-semibold">{getTaskCountByStatus(Status.PendingReview)}</div>
+                                </div>
+                                {/* <div className="bg-white/20 backdrop-blur-md p-2 md:p-4 rounded-lg">
+                                    <div className="font-bold">{Status.Done}</div>
                                     <div className="text-[40px] md:text-[60px] font-semibold">9</div>
-                                </div>
+                                </div> */}
                                 <div className="bg-white/20 backdrop-blur-md p-2 md:p-4 rounded-lg">
-                                    <div className="font-bold">Task OnHold</div>
-                                    <div className="text-[40px] md:text-[60px] font-semibold">2</div>
+                                    <div className="font-bold">{Status.OnHold}</div>
+                                    <div className="text-[40px] md:text-[60px] font-semibold">{getTaskCountByStatus(Status.OnHold)}</div>
                                 </div>
                             </div>
                         </TabsContent>
