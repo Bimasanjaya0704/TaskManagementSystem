@@ -1,3 +1,4 @@
+import { use } from "react";
 import { z } from "zod";
 
 export const LoginFormSchema = z.object({
@@ -9,6 +10,7 @@ export const LoginFormSchema = z.object({
 });
 
 export const RegisterFormSchema = z.object({
+  username: z.string(),
   firstName: z.string(),
   lastName: z.string(),
   email: z.string().email("Invalid email address"),

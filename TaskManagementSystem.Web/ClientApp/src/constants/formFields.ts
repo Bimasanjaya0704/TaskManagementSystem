@@ -17,6 +17,11 @@ export const LoginFormFields: LoginFormFieldsProps[] = [
 ];
 
 export const RegisterFormFields: RegisterFormFieldsProps[] = [
+   {
+    fieldName: "username",
+    fieldType: "text",
+    placeholder: "username",
+  },
   {
     fieldName: "firstName",
     fieldType: "text",

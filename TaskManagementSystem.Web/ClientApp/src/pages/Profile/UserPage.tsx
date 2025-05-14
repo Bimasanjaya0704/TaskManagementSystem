@@ -1,34 +1,42 @@
 import { useEffect, useState } from 'react';
-import { updateUser, getUserById } from '../../utils/api';
+import { updateUser, getUserById, getAssignedTasks, getReviewedTasks } from '../../utils/api';
 import { UserResponseDto } from '../../types/interfaces';
 import { useAuth } from '../../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import { LoadingIcon } from '../../components/LoadingIcon';
 import EditUserModal from './EditUserModal';
+import { toast } from "sonner";
 
 const UserPage = () => {
     const [user, setUser] = useState<UserResponseDto | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
     const [editMode, setEditMode] = useState<boolean>(false);
     const { token, id } = useAuth();
 
     useEffect(() => {
         const fetchUser = async () => {
             setLoading(true);
-            setError(null);
 
             try {
                 if (!token) throw new Error('Token is required to fetch user.');
                 if (!id) throw new Error('Id is required to fetch user.');
-                const ConvertIdToNumber = Number(id);
-                const response = await getUserById(ConvertIdToNumber, token);
+                const response = await getUserById(id);
+                const assignedTask = await getAssignedTasks(id);
+                const reviewedTask = await getReviewedTasks(id);
+                response.data.assignedTasks = assignedTask.data;
+                response.data.reviewedTasks = reviewedTask.data;
+                console.log(response);
                 setUser(response.data);
             } catch (err) {
-                setError('Failed to fetch user. Please try again later.');
+                let errorMessage = "An unexpected error occurred";
+                if (err instanceof Error) {
+                    errorMessage = err.message;
+                }
+                toast.error("Error Fetching User", {
+                    description: errorMessage,
+                    duration: 3000,
+                });
             } finally {
                 setLoading(false);
             }
@@ -41,33 +49,41 @@ const UserPage = () => {
 
     const handleUpdateUser = async (updatedUser: UserResponseDto) => {
         setLoading(true);
-        setError(null);
-
         try {
             if (!token) throw new Error('Token is required to update user.');
-            const ConvertIdToNumber = Number(updatedUser.id);
-            const response = await updateUser(ConvertIdToNumber, token, updatedUser);
+
+            const payload = {
+                firstName: updatedUser.firstName,
+                lastName: updatedUser.lastName,
+                username: updatedUser.username,
+            };
+
+            const response = await updateUser(updatedUser.userId, payload);
             setUser(response.data);
             setEditMode(false);
+            toast.success("Update Successful", {
+                description: "Your account has been updated.",
+                duration: 3000,
+            });
         } catch (err) {
-            setError('Failed to update user. Please try again later.');
+            let errorMessage = "An unexpected error occurred";
+            if (err instanceof Error) {
+                errorMessage = err.message;
+            }
+            toast.error("Error Update User", {
+                description: errorMessage,
+                duration: 3000,
+            });
         } finally {
             setLoading(false);
         }
     };
 
+
     if (loading) return <LoadingIcon />;
 
     return (
         <div className={`md:p-6 ${editMode ? 'overflow-hidden' : ''}`}>
-            {error && (
-                <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
-
             {user ? (
                 <Card className="w-full max-w-[1000px] mx-auto">
                     <CardHeader>
@@ -77,7 +93,13 @@ const UserPage = () => {
                             </Button></div>
                     </CardHeader>
                     <CardContent className='flex-none md:flex justify-between'>
-                        <div className="text-black/80 text-lg mb-6 md:mb-0 w-full md:max-w-[240px]">
+                        <div className="text-black/80 text-lg px-4 mb-6 md:mb-0 w-full md:max-w-[240px]">
+                            {/* Username */}
+                            <div className="md:flex items-center md:gap-4 mb-2 md:mb-0">
+                                <div className="font-semibold md:font-bold text-sm md:text-base">Username :</div>
+                                <div className="text-sm md:text-base">{user.username}</div>
+                            </div>
+
                             {/* First Name */}
                             <div className="md:flex items-center md:gap-4 mb-2 md:mb-0">
                                 <div className="font-semibold md:font-bold text-sm md:text-base">First Name :</div>
@@ -87,14 +109,8 @@ const UserPage = () => {
                             {/* Last Name */}
                             <div className="md:flex items-center md:gap-4 mb-2 md:mb-0">
                                 <div className="font-semibold md:font-bold text-sm md:text-base">Last Name :</div>
-                                <div className="text-sm md:text-base">{user.lastName}</div>
-                            </div>
-
-                            {/* Full Name */}
-                            <div className="md:flex items-center md:gap-4 mb-2 md:mb-0">
-                                <div className="font-semibold md:font-bold text-sm md:text-base">Full Name :</div>
                                 <div className="text-sm md:text-base">
-                                    {user.firstName} {user.lastName}
+                                    {user.lastName}
                                 </div>
                             </div>
 
@@ -110,17 +126,19 @@ const UserPage = () => {
                                 <div className="text-sm md:text-base">{user.role}</div>
                             </div>
                         </div>
-                        <div className='flex-none md:flex justify-between items-center gap-4'>
-                            <div className='px-10 py-4 bg-gradient-to-r from-accents to-accent-hover rounded-md mb-6 md:mb-0'>
-                                <div className='text-white font-semibold text-xl'>Assigned Task</div>
-                                <div className='text-white text-[50px] font-bold text-center'>{user.assignedTasks.length > 0 ? user.assignedTasks.length : 0}</div>
-                            </div>
-                            <div className='px-10 py-4 bg-gradient-to-r from-accent-hover to-accents rounded-md'>
-
-                                <div className='text-white font-semibold text-xl'>Reviewed Task</div>
-                                <div className='text-white text-[50px] font-bold text-center'>{user.reviewedTasks.length > 0 ? user.reviewedTasks.length : 0}</div>
+                        <div className='px-10 py-4 bg-gradient-to-r from-accents to-accent-hover rounded-md mb-6 md:mb-0'>
+                            <div className='text-white font-semibold text-xl'>Assigned Task</div>
+                            <div className='text-white text-[50px] font-bold text-center'>
+                                {user.assignedTasks?.length || 0}
                             </div>
                         </div>
+                        <div className='px-10 py-4 bg-gradient-to-r from-accent-hover to-accents rounded-md'>
+                            <div className='text-white font-semibold text-xl'>Reviewed Task</div>
+                            <div className='text-white text-[50px] font-bold text-center'>
+                                {user.reviewedTasks?.length || 0}
+                            </div>
+                        </div>
+
                     </CardContent>
                 </Card>
             ) : null

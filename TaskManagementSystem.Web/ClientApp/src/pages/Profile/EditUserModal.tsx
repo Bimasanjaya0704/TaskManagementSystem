@@ -23,7 +23,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onUpdateUser, onCan
     return (
         <div className="fixed inset-0 px-2 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
             <div className="absolute inset-0" aria-hidden="true" />
-            <Card className="max-w-md w-full bg-white md:p-6 z-50">
+            <Card className="max-w-md w-full bg-white md:p-6 z-50 px-4">
                 <CardHeader>
                     <CardTitle className='text-lg text-indigo-500/80 lg:text-[24px]'>
                         <div className='flex items-center gap-2'>
@@ -32,6 +32,18 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onUpdateUser, onCan
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className='text-black/78'>
+                        <div className="mb-4">
+                            <Label className='mb-1.5 ml-0.5 text-black/70 text-sm md:text-base'>Username</Label>
+                            <Input
+                                className='text-black/70 text-sm md:text-base border-indigo-500/70'
+                                type="text"
+                                value={updateUSer.username}
+                                onChange={(e) =>
+                                    setUpdateUser({ ...updateUSer, username: e.target.value })
+                                }
+                                autoFocus
+                            />
+                        </div>
                         <div className="mb-4">
                             <Label className='mb-1.5 ml-0.5 text-black/70 text-sm md:text-base'>First Name</Label>
                             <Input

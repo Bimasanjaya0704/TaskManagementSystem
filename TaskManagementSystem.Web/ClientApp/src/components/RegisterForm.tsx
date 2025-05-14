@@ -21,6 +21,7 @@ const RegisterForm: React.FC = () => {
   } = useForm<RegisterDto>({
     resolver: zodResolver(RegisterFormSchema),
     defaultValues: {
+      username: "",
       firstName: "",
       lastName: "",
       email: "",
@@ -33,13 +34,13 @@ const RegisterForm: React.FC = () => {
       await registerUser(data);
       toast.success("Registration Successful", {
         description: "Your account has been created successfully.",
-        duration: 2000,
+        duration: 3000,
       });
       navigate("/login");
     } catch (err) {
       toast.error("Registration Failed", {
         description: (err as Error).message || "An error occurred during registration.",
-        duration: 2000,
+        duration: 3000,
       });
     }
   };

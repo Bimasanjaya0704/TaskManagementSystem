@@ -8,6 +8,7 @@ export interface AuthState {
 export interface RegisterDto {
   firstName: string;
   lastName: string;
+  username: string;
   email: string;
   password: string;
 }
@@ -18,9 +19,10 @@ export interface LoginRequestDto {
 }
 
 export interface UserResponseDto {
-  id: number;
+  userId: string;
   firstName: string;
   lastName: string;
+  username: string;
   email: string;
   role: ROLE;
   assignedTasks: TaskResponseDto[];
@@ -33,21 +35,21 @@ export interface TaskRequestDto {
   dueDate: Date;
   // priority: Priority;
   status: Status;
-  assignedTo: number;
-  reviewedBy: number;
-  projectId: number;
+  assignedTo: string;
+  reviewedBy: string;
+  projectId: string;
 }
 
 export interface TaskResponseDto {
-  id: number;
+  id: string;
   title: string;
   description: string;
   dueDate: Date;
   // priority: Priority;
   status: Status;
-  assignedTo: number;
-  reviewedBy: number;
-  projectId: number;
+  assignedTo: string;
+  reviewedBy: string;
+  projectId: string;
 }
 
 export interface ProjectRequestDto {
@@ -56,17 +58,17 @@ export interface ProjectRequestDto {
   dueDate: Date;
   projectStatus: ProjectStatus;
   projectPriority: ProjectPriority;
-  createdByUserId: number;
+  createdByUserId: string;
 }
 
 export interface ProjectResponseDto {
-  id: number;
+  projectId: string;
   name: string;
   description: string;
   dueDate: Date;
   projectStatus: ProjectStatus;
   projectPriority: ProjectPriority;
-  createdByUserId: number;
+  creatorUserId: string;
   tasks: TaskResponseDto[];
 }
 

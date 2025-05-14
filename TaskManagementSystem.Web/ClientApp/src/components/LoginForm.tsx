@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler } from "react-hook-form";
 // import { z } from "zod";
 import { LoginFormFields } from "../constants/formFields";
-import { login, setAuthToken } from "../utils/api";
+import { login } from "../utils/api";
 import { LoginRequestDto } from "../types/interfaces";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -16,7 +16,7 @@ import { Button } from "./ui/button";
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { login: loginAuth, token } = useAuth();
+  const { login: loginAuth } = useAuth();
 
   const {
     handleSubmit,
@@ -33,17 +33,17 @@ const LoginForm: React.FC = () => {
   const handleFormSubmit: SubmitHandler<LoginRequestDto> = async (data) => {
     try {
       const response = await login(data);
-      loginAuth(response.token, response.user.role, response.user.firstName, response.user.id);
-      setAuthToken(token);
+      loginAuth(response.token, response.user.role, response.user.firstName, response.user.userId);
+
       toast.success("Login Successful", {
         description: "Your account has been Login.",
-        duration: 2000,
+        duration: 3000,
       });
       navigate("/");
     } catch (err) {
       toast.error("Login Failed", {
         description: (err as Error).message || "An error occurred during Login.",
-        duration: 2000,
+        duration: 3000,
       });
     }
   };

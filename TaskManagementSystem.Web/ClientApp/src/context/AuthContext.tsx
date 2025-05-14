@@ -87,12 +87,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("userName");
     localStorage.removeItem("id");
+
     setAuth({
       isAuthenticated: false,
       role: null,
@@ -104,12 +104,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     window.location.href = "/login";
   };
 
-
   return (
     <AuthContext.Provider value={{ ...auth, login, logout }}>
       {children}
     </AuthContext.Provider>
-
   );
 };
 
