@@ -22,7 +22,7 @@ const ModalCreateProject: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
         dueDate: new Date(),
         projectStatus: ProjectStatus.NotStarted,
         projectPriority: ProjectPriority.Medium,
-        createdByUserId: id ? parseInt(id, 10) : 0,
+        creatorUserId: id ?? "",
     });
 
     const handleCreateProject = () => {

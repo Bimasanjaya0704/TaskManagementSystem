@@ -58,7 +58,7 @@ export interface ProjectRequestDto {
   dueDate: Date;
   projectStatus: ProjectStatus;
   projectPriority: ProjectPriority;
-  createdByUserId: string;
+  creatorUserId: string;
 }
 
 export interface ProjectResponseDto {
@@ -70,6 +70,12 @@ export interface ProjectResponseDto {
   projectPriority: ProjectPriority;
   creatorUserId: string;
   tasks: TaskResponseDto[];
+}
+
+export interface InviteUserToProjectDto {
+  projectId: string;
+  username: string;
+  projectRole: ProjectRole;
 }
 
 // export enum Priority {
@@ -97,4 +103,10 @@ export enum ProjectPriority {
   Low = "Low",
   Medium = "Medium",
   High = "High",
+}
+
+export enum ProjectRole {
+  Owner = "Owner",
+  Admin = "Admin",
+  Member = "Member"
 }

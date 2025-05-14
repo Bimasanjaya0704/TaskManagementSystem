@@ -1,5 +1,5 @@
 import axios from "axios";
-import { LoginRequestDto, ProjectRequestDto, RegisterDto, TaskRequestDto } from "../types/interfaces";
+import { InviteUserToProjectDto, LoginRequestDto, ProjectRequestDto, RegisterDto, TaskRequestDto } from "../types/interfaces";
 import { useAuth } from "../context/AuthContext";
 
 const API_BASE_URL = "http://localhost:5023/api";
@@ -87,6 +87,15 @@ export async function getAllUsers() {
 export async function getUserById(id: string) {
   try {
     const { data } = await api.get(`/user/${id}`);
+    return data;
+  } catch (error: unknown) {
+    handleError(error);
+  }
+}
+
+export async function getUserByUsername(username: string) {
+  try {
+    const { data } = await api.get(`/user/username/${username}`);
     return data;
   } catch (error: unknown) {
     handleError(error);
@@ -215,6 +224,33 @@ export async function updateProject(id: string, projectDto: ProjectRequestDto) {
 export async function deleteProject(id: string) {
   try {
     const { data } = await api.delete(`/project/${id}`);
+    return data;
+  } catch (error: unknown) {
+    handleError(error);
+  }
+}
+
+export async function getProjectMember(projectId: string) {
+  try {
+    const { data } = await api.get(`/project/${projectId}/members`);
+    return data;
+  } catch (error: unknown) {
+    handleError(error);
+  }
+}
+
+export async function inviteUserToProject(projectId: string, inviteDto: InviteUserToProjectDto) {
+  try {
+    const { data } = await api.post(`/project/${projectId}/invite`, inviteDto);
+    return data;
+  } catch (error: unknown) {
+    handleError(error);
+  }
+}
+
+export async function deleteUserFromMember(projectId: string, userId: string) {
+  try {
+    const { data } = await api.post(`/project/${projectId}/remove-member/${userId}`);
     return data;
   } catch (error: unknown) {
     handleError(error);
