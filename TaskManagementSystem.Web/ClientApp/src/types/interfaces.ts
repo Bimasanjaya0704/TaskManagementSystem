@@ -35,8 +35,8 @@ export interface TaskRequestDto {
   dueDate: Date;
   // priority: Priority;
   status: Status;
-  assignedTo: string;
-  reviewedBy: string;
+  assignedToUserId: string;
+  reviewedToUserId: string;
   projectId: string;
 }
 
@@ -47,8 +47,8 @@ export interface TaskResponseDto {
   dueDate: Date;
   // priority: Priority;
   status: Status;
-  assignedTo: string;
-  reviewedBy: string;
+  assignedToUserId: string;
+  reviewedToUserId: string;
   projectId: string;
 }
 

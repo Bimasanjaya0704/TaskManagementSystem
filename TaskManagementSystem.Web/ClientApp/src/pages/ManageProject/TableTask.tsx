@@ -6,11 +6,11 @@ interface Task {
     id: string;
     title: string;
     status: string;
-    assignedTo: string;
-    reviewBy: string;
+    assignedToUserId: string;
+    reviewedToUserId: string;
     dueDate: string;
-    description: string; 
-  }
+    description: string;
+}
 
 interface TaskTableProps {
     tasks: Task[];
@@ -47,13 +47,13 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
                             <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">{task.title}</td>
                             <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">{task.description}</td>
                             <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">{formatDate(task.dueDate)}</td>
-                            <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">{task.assignedTo}</td>
-                            <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">{task.reviewBy}</td>
+                            <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">{task.assignedToUserId}</td>
+                            <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">{task.reviewedToUserId}</td>
                             <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">{task.status}</td>
                             <td className="py-3 px-4 text-[11px] md:text-sm text-gray-800 dark:text-white">
                                 <div className="flex items-center space-x-2">
-                                <button onClick={() => alert("Edit Task")} className="cursor-pointer text-blue-500 hover:scale-110 transition"><FaEdit /></button>
-                                <button onClick={() => alert("Delete Task")} className="cursor-pointer text-red-500 hover:scale-110 transition"><FaTrash /></button>
+                                    <button onClick={() => alert("Edit Task")} className="cursor-pointer text-blue-500 hover:scale-110 transition"><FaEdit /></button>
+                                    <button onClick={() => alert("Delete Task")} className="cursor-pointer text-red-500 hover:scale-110 transition"><FaTrash /></button>
                                 </div>
                             </td>
                         </tr>

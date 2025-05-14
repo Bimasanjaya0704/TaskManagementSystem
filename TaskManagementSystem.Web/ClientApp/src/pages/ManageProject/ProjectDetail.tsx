@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getProjectById } from "../../utils/api";
+import { getProjectById, getUserById } from "../../utils/api";
 import { ProjectResponseDto } from "../../types/interfaces";
 import { LoadingIcon } from "../../components/LoadingIcon";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
@@ -18,12 +18,49 @@ const ProjectDetail = () => {
     const [project, setProject] = useState<ProjectResponseDto | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [userNames, setUserNames] = useState<Record<string, string>>({});
+
 
     useEffect(() => {
         if (projectId && token) {
             fetchProjectDetail(projectId);
         }
     }, [projectId, token]);
+
+    useEffect(() => {
+        const fetchUserNames = async () => {
+            if (!project || !token) return;
+
+            const userIds = new Set<string>();
+
+            project.tasks.forEach(task => {
+                if (task.assignedToUserId) userIds.add(task.assignedToUserId);
+                if (task.reviewedToUserId) userIds.add(task.reviewedToUserId);
+            });
+
+            const names: Record<string, string> = { ...userNames };
+
+            for (const id of userIds) {
+                if (!names[id]) {
+                    try {
+                        const res = await getUserById(id);
+                        if (res.success) {
+                            names[id] = res.data.firstName + " " + res.data.lastName;
+                        } else {
+                            names[id] = "Unknown User";
+                        }
+                    } catch {
+                        names[id] = "Error Fetching";
+                    }
+                }
+            }
+
+            setUserNames(names);
+        };
+
+        fetchUserNames();
+    }, [project]);
+
 
 
     const fetchProjectDetail = async (projectId: string) => {
@@ -50,14 +87,14 @@ const ProjectDetail = () => {
             id: task.id,
             title: task.title || "No Title",
             status: task.status || "Unknown",
-            assignedTo: task.assignedTo,
-            reviewBy: task.reviewedBy,
+            assignedToUserId: userNames[task.assignedToUserId] || "Unknown",
+            reviewedToUserId: task.reviewedToUserId,
             dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : "No Due Date",
             description: task.description || "No Description",
         })) || [];
     };
 
-   
+
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
@@ -145,7 +182,7 @@ const ProjectDetail = () => {
                                     <div className="w-full lg:w-1/3 flex flex-col gap-2 md:gap-6">
                                         <div className="md:px-6 px-4 py-3 md:py-4 text-white bg-indigo-700/90 backdrop-blur-md border-2 rounded-lg order-1">
                                             <div className="font-semibold">Created by:</div>
-                                                <div>{project.creatorUserId}</div>
+                                            <div>{project.creatorUserId}</div>
                                         </div>
                                         <div className="md:py-6 py-3 text-white text-center bg-indigo-700/90 backdrop-blur-md border-2 rounded-lg order-3">
                                             <div className="font-bold">Total Tasks:</div>
@@ -186,8 +223,8 @@ const ProjectDetail = () => {
                             {project ? (
                                 <div className="w-full">
                                     <div className="flex items-center justify-between mb-4">
-                                    <div className="text-xl font-bold mb-4">Manage Tasks</div>
-                                    <Button onClick={() => alert("Add Task")} className="hover:scale-105 transition-all duration-300"> <FaPlus /> Add Tasks</Button>
+                                        <div className="text-xl font-bold mb-4">Manage Tasks</div>
+                                        <Button onClick={() => alert("Add Task")} className="hover:scale-105 transition-all duration-300"> <FaPlus /> Add Tasks</Button>
                                     </div>
                                     <TaskTable tasks={transformTasksForTable()} />
                                 </div>
