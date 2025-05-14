@@ -1,5 +1,6 @@
 import axios from "axios";
-import { LoginRequestDto, RegisterDto } from "../types/interfaces";
+import { LoginRequestDto, ProjectRequestDto, RegisterDto, TaskRequestDto } from "../types/interfaces";
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE_URL = "http://localhost:5023/api";
 
@@ -10,21 +11,45 @@ const api = axios.create({
   },
 });
 
-export function setAuthToken(token: string | null) {
-  if (token) {
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    api.defaults.headers.common["Content-Type"] = "application/json";
-  } else {
-    delete api.defaults.headers.common["Authorization"];
+// Setup axios interceptors untuk otomatis menambahkan token ke setiap request
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  console.log("header :", api.defaults.headers.common);
+// Response interceptor untuk menangani error 401 (Unauthorized)
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const { logout: logoutAuth } = useAuth();
+      logoutAuth();
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Fungsi untuk debugging, bisa dipanggil saat perlu memeriksa header
+export function logAuthHeader() {
+  const token = localStorage.getItem("token");
+  console.log("Current token in localStorage:", token ? `${token.substring(0, 15)}...` : "None");
+  console.log("Current headers:", api.defaults.headers.common);
 }
 
 export function handleError(error: unknown): never {
   if (axios.isAxiosError(error)) {
     throw new Error(
-      error.response?.data?.message || "An unexpected error occurred"
+      error.response?.data?.errorMessage || error.response?.data?.message || "An unexpected error occurred"
     );
   }
   throw new Error("An unexpected error occurred");
@@ -50,12 +75,8 @@ export async function registerUser(registerDto: RegisterDto) {
 }
 
 // User Api
-export async function getAllUsers(token: string) {
+export async function getAllUsers() {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.get("/user");
     return data;
   } catch (error: unknown) {
@@ -63,12 +84,8 @@ export async function getAllUsers(token: string) {
   }
 }
 
-export async function getUserById(id: number, token: string) {
+export async function getUserById(id: string) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.get(`/user/${id}`);
     return data;
   } catch (error: unknown) {
@@ -76,12 +93,8 @@ export async function getUserById(id: number, token: string) {
   }
 }
 
-export async function updateUser(id: number, token: string, userDto: any) {
+export async function updateUser(id: string, userDto: any) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.put(`/user/${id}`, userDto);
     return data;
   } catch (error: unknown) {
@@ -89,12 +102,8 @@ export async function updateUser(id: number, token: string, userDto: any) {
   }
 }
 
-export async function deleteUser(id: number, token: string) {
+export async function deleteUser(id: string) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.delete(`/user/${id}`);
     return data;
   } catch (error: unknown) {
@@ -103,12 +112,8 @@ export async function deleteUser(id: number, token: string) {
 }
 
 // Task Api
-export async function getAllTasks(token: string) {
+export async function getAllTasks() {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.get("/task");
     return data;
   } catch (error: unknown) {
@@ -116,12 +121,8 @@ export async function getAllTasks(token: string) {
   }
 }
 
-export async function createTask(token: string, taskDto: any) {
+export async function createTask(taskDto: TaskRequestDto) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.post(`/task`, taskDto);
     return data;
   } catch (error: unknown) {
@@ -129,12 +130,8 @@ export async function createTask(token: string, taskDto: any) {
   }
 }
 
-export async function getTaskById(id: number, token: string) {
+export async function getTaskById(id: string) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.get(`/task/${id}`);
     return data;
   } catch (error: unknown) {
@@ -142,12 +139,8 @@ export async function getTaskById(id: number, token: string) {
   }
 }
 
-export async function updateTask(id: number, token: string, taskDto: any) {
+export async function updateTask(id: string, taskDto: TaskRequestDto) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.put(`/task/${id}`, taskDto);
     return data;
   } catch (error: unknown) {
@@ -155,12 +148,8 @@ export async function updateTask(id: number, token: string, taskDto: any) {
   }
 }
 
-export async function deleteTask(id: number, token: string) {
+export async function deleteTask(id: string) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.delete(`/task/${id}`);
     return data;
   } catch (error: unknown) {
@@ -168,13 +157,27 @@ export async function deleteTask(id: number, token: string) {
   }
 }
 
-// Project Api
-export async function getAllProjects(token: string) {
+export async function getReviewedTasks(id: string) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
+    const { data } = await api.get(`/task/review-tasks/${id}`);
+    return data;
+  } catch (error: unknown) {
+    handleError(error);
+  }
+}
 
+export async function getAssignedTasks(id: string) {
+  try {
+    const { data } = await api.get(`/task/assigned-tasks/${id}`);
+    return data;
+  } catch (error: unknown) {
+    handleError(error);
+  }
+}
+
+// Project Api
+export async function getAllProjects() {
+  try {
     const { data } = await api.get("/project");
     return data;
   } catch (error: unknown) {
@@ -182,12 +185,8 @@ export async function getAllProjects(token: string) {
   }
 }
 
-export async function createProject(token: string, projectDto: any) {
+export async function createProject(projectDto: ProjectRequestDto) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.post(`/project`, projectDto);
     return data;
   } catch (error: unknown) {
@@ -195,12 +194,8 @@ export async function createProject(token: string, projectDto: any) {
   }
 }
 
-export async function getProjectById(id: number, token: string) {
+export async function getProjectById(id: string) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.get(`/project/${id}`);
     return data;
   } catch (error: unknown) {
@@ -208,12 +203,8 @@ export async function getProjectById(id: number, token: string) {
   }
 }
 
-export async function updateProject(id: number, token: string, projectDto: any) {
+export async function updateProject(id: string, projectDto: ProjectRequestDto) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.put(`/project/${id}`, projectDto);
     return data;
   } catch (error: unknown) {
@@ -221,12 +212,8 @@ export async function updateProject(id: number, token: string, projectDto: any) 
   }
 }
 
-export async function deleteProject(id: number, token: string) {
+export async function deleteProject(id: string) {
   try {
-    if (token) {
-      setAuthToken(token);
-    }
-
     const { data } = await api.delete(`/project/${id}`);
     return data;
   } catch (error: unknown) {
